@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Check, X, Loader2, ChevronRight } from "lucide-react"
+import { Check, X, Loader2, ChevronRight, Square } from "lucide-react"
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "./ui/collapsible"
 import { ScrollArea } from "./ui/scroll-area"
 import { cn, shortPath, fmtDur } from "@/lib/utils"
@@ -19,6 +19,19 @@ function relTime(r: Run): string {
   if (r.result?.duration_seconds != null) return fmtDur(r.result.duration_seconds)
   if (r.status === "running") return Math.round((Date.now() - r.start) / 1000) + "s"
   return ""
+}
+
+async function handleStop(e: React.MouseEvent, r: Run) {
+  e.stopPropagation()
+  try {
+    await fetch("/stop", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ teeFile: r.file, pid: r.pid }),
+    })
+  } catch (err) {
+    console.error("Failed to stop session:", err)
+  }
 }
 
 export function Sidebar({
@@ -85,19 +98,24 @@ export function Sidebar({
                   .map((r) => {
                     const isSelected = r.file === selectedFile
                     return (
-                      <button
+                      <div
                         key={r.file}
                         onClick={() => onSelect(r.file)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault()
+                            onSelect(r.file)
+                          }
+                        }}
                         className={cn(
-                          "w-full flex items-center gap-2 pl-6 pr-2.5 py-1.5 text-xs rounded transition-all duration-150 text-left cursor-pointer min-w-0 overflow-hidden relative group/item",
+                          "w-full flex items-center gap-2 px-2.5 py-1.5 text-xs rounded transition-all duration-150 text-left cursor-pointer min-w-0 overflow-hidden group/item",
                           isSelected
-                            ? "bg-accent text-accent-foreground font-medium shadow-xs"
+                            ? "bg-accent text-accent-foreground font-medium shadow-xs border-l-2 border-primary pl-2"
                             : "text-muted-foreground hover:bg-muted/40 hover:text-foreground hover:translate-x-0.5 active:translate-x-0"
                         )}
                       >
-                        {isSelected && (
-                          <span className="absolute left-1.5 top-1.5 bottom-1.5 w-1 rounded-full bg-primary animate-fade-in" />
-                        )}
                         <StatusIcon status={r.status} />
                         <span className="font-mono text-[11px] flex-1 truncate min-w-0">
                           {r.convId ? r.convId.slice(0, 8) : shortPath(r.file)}
@@ -105,7 +123,18 @@ export function Sidebar({
                         <span className="font-mono text-[10px] text-muted-foreground/40 group-hover/item:text-muted-foreground/60 shrink-0 tabular-nums transition-colors">
                           {relTime(r)}
                         </span>
-                      </button>
+                        {r.status === "running" && (
+                          <button
+                            type="button"
+                            title="Stop session"
+                            aria-label="Stop session"
+                            onClick={(e) => handleStop(e, r)}
+                            className="p-1 -mr-1 rounded hover:bg-red-500/20 text-muted-foreground/60 hover:text-red-400 active:scale-95 transition-all duration-150 cursor-pointer shrink-0"
+                          >
+                            <Square className="w-3 h-3 fill-current" />
+                          </button>
+                        )}
+                      </div>
                     )
                   })}
               </CollapsibleContent>

@@ -1,3 +1,4 @@
+import { Loader2 } from "lucide-react"
 import { ScrollArea } from "./ui/scroll-area"
 import { Badge } from "./ui/badge"
 import { StepRow } from "./StepRow"
@@ -39,10 +40,7 @@ export function Transcript({ run }: { run: Run | null }) {
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-border text-xs min-h-[41px] min-w-0 max-w-full bg-card/20 backdrop-blur-xs">
         <div className="flex items-center gap-2 truncate min-w-0 flex-1 mr-2">
           {isRunning && (
-            <span className="relative flex h-2 w-2 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
-            </span>
+            <Loader2 className="w-3.5 h-3.5 text-blue-400 animate-spin shrink-0" />
           )}
           <span className="text-foreground font-medium truncate min-w-0 font-mono text-xs" title={run.convId || run.file}>
             {run.convId || shortPath(run.file)}
@@ -70,7 +68,7 @@ export function Transcript({ run }: { run: Run | null }) {
           )}
           {steps.length === 0 && (
             <div className="flex items-center justify-center h-32 text-muted-foreground/40 text-xs animate-fade-in gap-2">
-              <span className="w-2 h-2 rounded-full bg-blue-400 agy-pulse" />
+              <Loader2 className="w-3.5 h-3.5 text-blue-400 animate-spin shrink-0" />
               <span>Waiting for events…</span>
             </div>
           )}

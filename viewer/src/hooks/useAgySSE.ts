@@ -2,11 +2,13 @@ import { useEffect, useState, useRef } from "react"
 import type { AgyEvent, Run, Step, DiffLine } from "../types"
 
 function makeRun(file: string): Run {
-  return { file, convId: null, cwd: null, toolCount: 0, perm: null, status: "running", start: Date.now(), steps: new Map(), result: null, promptText: null }
+  return { file, convId: null, cwd: null, toolCount: 0, perm: null, status: "running", start: Date.now(), steps: new Map(), result: null, promptText: null, pid: null }
 }
 
 function handle(run: Run, e: AgyEvent) {
-  if (e.event === "prompt" && e.text) {
+  if (e.event === "process" && typeof e.pid === "number") {
+    run.pid = e.pid
+  } else if (e.event === "prompt" && e.text) {
     run.promptText = e.text
   } else if (e.event === "init") {
     if (e.conversation_id) run.convId = e.conversation_id

@@ -379,7 +379,7 @@ function renderMd(text: string): string {
   h = h.replace(/^## (.+)$/gm, '<div class="text-base font-semibold text-foreground mt-2.5 mb-1">$1</div>')
   h = h.replace(/^# (.+)$/gm, '<div class="text-lg font-semibold text-foreground mt-3 mb-1.5">$1</div>')
   // list items (- and *)
-  h = h.replace(/^(?:- |\* )(.+)$/gm, '<div class="text-sm text-foreground/90 pl-4 relative before:content-[""] before:absolute before:left-1 before:top-2 before:w-1 before:h-1 before:rounded-full before:bg-muted-foreground/50">$1</div>')
+  h = h.replace(/^(?:- |\* )(.+)$/gm, '<div class="text-sm text-foreground/90 pl-4 relative before:content-[\'•\'] before:absolute before:left-1 before:text-muted-foreground/60">$1</div>')
   // numbered list items (1. 2. etc)
   h = h.replace(/^(\d+)\. (.+)$/gm, '<div class="text-sm text-foreground/90 pl-5"><span class="text-muted-foreground/60">$1.</span> $2</div>')
   // blockquotes
@@ -418,7 +418,11 @@ export function StepRow({ step }: { step: Step }) {
   if (isThinking) {
     return (
       <div className="px-4 py-1 flex items-center gap-2 text-xs text-muted-foreground/50 min-w-0 overflow-hidden animate-step-in">
-        <Brain className={cn("w-3.5 h-3.5 text-muted-foreground/40 shrink-0", isActive && "agy-pulse")} />
+        {isActive ? (
+          <Loader2 className="w-3.5 h-3.5 text-blue-400 animate-spin shrink-0" />
+        ) : (
+          <Brain className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />
+        )}
         <span className="shrink-0">thinking</span>
         {step.thinking > 0 && (
           <span className="font-mono text-[11px] text-muted-foreground/40 truncate min-w-0">

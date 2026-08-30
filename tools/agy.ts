@@ -49,6 +49,7 @@ interface AgyStreamEvent {
   }
   message?: string
   text?: string
+  pid?: number
 }
 
 function shortTail(s: string, max = 72): string {
@@ -183,6 +184,13 @@ export default tool({
     if (args.conversation_id) agyArgs.push("--conversation", args.conversation_id)
 
     const proc = spawn(AGY_BIN, agyArgs, { stdio: ["ignore", "pipe", "pipe"] })
+
+    // Write PID event so viewer and server can track and interrupt if needed
+    try {
+      if (proc.pid) {
+        appendFileSync(teePath, JSON.stringify({ event: "process", pid: proc.pid }) + "\n")
+      }
+    } catch {}
 
     let conversationId: string | undefined
     let resultText = ""

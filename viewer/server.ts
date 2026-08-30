@@ -148,6 +148,7 @@ function processLine(teeFile: string, rawLine: string): string[] {
 
 // ── tee file reading ─────────────────────────────────────────────────────
 const offsets = new Map<string, number>()
+const pids = new Map<string, number>()
 
 function scanTeeFiles(): string[] {
   try {
@@ -171,7 +172,15 @@ function readNewLines(path: string): { lines: string[]; extras: string[] } {
     const lines = chunk.split("\n").filter((l) => l.trim().length > 0)
     console.error(`[tee] ${path}: ${lines.length} new lines (offset ${offset} → ${size})`)
     const extras: string[] = []
-    for (const line of lines) extras.push(...processLine(path, line))
+    for (const line of lines) {
+      try {
+        const evt = JSON.parse(line)
+        if (evt.event === "process" && typeof evt.pid === "number") {
+          pids.set(path, evt.pid)
+        }
+      } catch {}
+      extras.push(...processLine(path, line))
+    }
     if (extras.length > 0) console.error(`[tee] ${extras.length} extras generated`)
     return { lines, extras }
   } catch {
@@ -181,6 +190,84 @@ function readNewLines(path: string): { lines: string[]; extras: string[] } {
 
 // ── HTTP server ──────────────────────────────────────────────────────────
 const server = createServer((req, res) => {
+  if (req.method === "OPTIONS") {
+    res.writeHead(204, {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    })
+    res.end()
+    return
+  }
+
+  if (req.url === "/stop" && req.method === "POST") {
+    let body = ""
+    req.on("data", (chunk) => {
+      body += chunk
+    })
+    req.on("end", () => {
+      try {
+        const data = JSON.parse(body || "{}")
+        let targetPid: number | undefined = typeof data.pid === "number" ? data.pid : undefined
+
+        if (!targetPid && data.teeFile) {
+          targetPid = pids.get(data.teeFile)
+          if (!targetPid) {
+            for (const [f, p] of pids.entries()) {
+              if (f === data.teeFile || f.endsWith(data.teeFile)) {
+                targetPid = p
+                break
+              }
+            }
+          }
+        }
+
+        if (!targetPid && data.sessionId) {
+          for (const [f, p] of pids.entries()) {
+            if (f.includes(data.sessionId)) {
+              targetPid = p
+              break
+            }
+          }
+        }
+
+        if (targetPid) {
+          try {
+            process.kill(targetPid, "SIGTERM")
+            console.error(`[stop] Sent SIGTERM to PID ${targetPid}`)
+            res.writeHead(200, {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            })
+            res.end(JSON.stringify({ ok: true, pid: targetPid }))
+            return
+          } catch (err: any) {
+            console.error(`[stop] Failed to kill PID ${targetPid}:`, err)
+            res.writeHead(200, {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            })
+            res.end(JSON.stringify({ ok: false, error: err?.message || "Failed to kill process", pid: targetPid }))
+            return
+          }
+        }
+
+        res.writeHead(404, {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        })
+        res.end(JSON.stringify({ ok: false, error: "Process PID not found" }))
+      } catch (e: any) {
+        res.writeHead(400, {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        })
+        res.end(JSON.stringify({ ok: false, error: e?.message || "Invalid JSON" }))
+      }
+    })
+    return
+  }
+
   if (req.url === "/events") {
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
@@ -229,16 +316,6 @@ const server = createServer((req, res) => {
 
   // Serve built app
   const distDir = pjoin(__dirname, "dist")
-  if (req.url === "/" || req.url === "/index.html") {
-    try {
-      const html = readFileSync(pjoin(distDir, "index.html"), "utf8")
-      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" })
-      res.end(html)
-    } catch {
-      res.writeHead(404); res.end("index.html not found — run `bun run build` first")
-    }
-    return
-  }
 
   if (req.url?.startsWith("/assets/")) {
     try {
@@ -252,6 +329,20 @@ const server = createServer((req, res) => {
       res.end(content)
     } catch { res.writeHead(404); res.end("not found") }
     return
+  }
+
+  // SPA fallback: serve index.html for /, /index.html, and client routes (/:sessionId)
+  if (req.method === "GET" || req.method === "HEAD") {
+    try {
+      const html = readFileSync(pjoin(distDir, "index.html"), "utf8")
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" })
+      res.end(html)
+      return
+    } catch {
+      res.writeHead(404)
+      res.end("index.html not found — run `bun run build` first")
+      return
+    }
   }
 
   res.writeHead(404); res.end("not found")

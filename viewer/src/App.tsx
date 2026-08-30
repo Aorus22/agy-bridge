@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Menu } from "lucide-react"
 import { Sheet, SheetContent } from "./components/ui/sheet"
 import { Sidebar } from "./components/Sidebar"
@@ -6,13 +6,44 @@ import { Transcript } from "./components/Transcript"
 import { useAgySSE } from "./hooks/useAgySSE"
 import type { Run } from "./types"
 
+function getSlugFromPath(): string {
+  const p = window.location.pathname.replace(/^\/+|\/+$/g, "")
+  if (!p || p === "index.html") return ""
+  return p
+}
+
+function getSessionSlug(run: Run): string {
+  if (run.convId) return run.convId.slice(0, 8)
+  const base = run.file.split("/").pop() || run.file
+  return base.replace(/\.jsonl$/i, "")
+}
+
+function findRunBySlug(runs: Map<string, Run>, slug: string): Run | null {
+  if (!slug) return null
+  const s = slug.toLowerCase()
+  for (const r of runs.values()) {
+    if (r.convId && r.convId.toLowerCase().startsWith(s)) return r
+    const fileSlug = (r.file.split("/").pop() || r.file).replace(/\.jsonl$/i, "").toLowerCase()
+    if (fileSlug === s || fileSlug.startsWith(s)) return r
+  }
+  return null
+}
+
 export default function App() {
   const runs = useAgySSE()
-  const [selectedFile, setSelectedFile] = useState<string | null>(() => {
-    try { return localStorage.getItem("agy-bridge:selected") } catch { return null }
-  })
+  const [routeSlug, setRouteSlug] = useState<string>(getSlugFromPath)
+  const [selectedFile, setSelectedFile] = useState<string | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [, setTick] = useState(0)
+
+  // Listen to browser popstate (back/forward navigation)
+  useEffect(() => {
+    const onPopState = () => {
+      setRouteSlug(getSlugFromPath())
+    }
+    window.addEventListener("popstate", onPopState)
+    return () => window.removeEventListener("popstate", onPopState)
+  }, [])
 
   // Live timer for running sessions
   useEffect(() => {
@@ -28,15 +59,46 @@ export default function App() {
     return () => clearInterval(iv)
   }, [runs])
 
-  // Auto-select most recent session
+  // Sync selected session with route slug or fallback to latest
   useEffect(() => {
-    if (selectedFile && runs.has(selectedFile)) return
-    let latest: Run | null = null
-    for (const r of runs.values()) {
-      if (!latest || r.start > latest.start) latest = r
+    if (runs.size === 0) return
+
+    if (routeSlug) {
+      const matched = findRunBySlug(runs, routeSlug)
+      if (matched) {
+        setSelectedFile(matched.file)
+        return
+      }
     }
-    if (latest) setSelectedFile(latest.file)
-  }, [runs, selectedFile])
+
+    // If no route slug (path is /), auto-select most recent session without changing URL
+    if (!routeSlug) {
+      if (selectedFile && runs.has(selectedFile)) return
+      let latest: Run | null = null
+      for (const r of runs.values()) {
+        if (!latest || r.start > latest.start) latest = r
+      }
+      if (latest) {
+        setSelectedFile(latest.file)
+      }
+    }
+  }, [runs, routeSlug, selectedFile])
+
+  const handleSelect = useCallback(
+    (file: string) => {
+      setSelectedFile(file)
+      const run = runs.get(file)
+      if (run) {
+        const slug = getSessionSlug(run)
+        setRouteSlug(slug)
+        if (window.location.pathname !== `/${slug}`) {
+          window.history.pushState({ slug, file }, "", `/${slug}`)
+        }
+      }
+      setMobileOpen(false)
+    },
+    [runs]
+  )
 
   const selectedRun = selectedFile ? runs.get(selectedFile) ?? null : null
 
@@ -45,7 +107,7 @@ export default function App() {
       <div className="px-3.5 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 border-b border-border shrink-0 select-none flex items-center justify-between">
         <span>Sessions</span>
         {runs.size > 0 && (
-          <span className="font-mono text-[10px] px-1.5 py-0.5 text-muted-foreground/50 bg-muted/40 rounded-full tabular-nums animate-fade-in">
+          <span className="font-mono text-[10px] px-1.5 py-0.5 text-muted-foreground/50 bg-muted/40 rounded tabular-nums animate-fade-in">
             {runs.size}
           </span>
         )}
@@ -54,11 +116,7 @@ export default function App() {
         <Sidebar
           runs={runs}
           selectedFile={selectedFile}
-          onSelect={(f) => {
-            setSelectedFile(f)
-            try { localStorage.setItem("agy-bridge:selected", f) } catch {}
-            setMobileOpen(false)
-          }}
+          onSelect={handleSelect}
         />
       </div>
     </div>
