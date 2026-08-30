@@ -1,31 +1,36 @@
-import { Wrench, Brain, Bot, MessageSquare, Check, X, Loader2 } from "lucide-react"
+import { Card } from "./ui/card"
 import { Badge } from "./ui/badge"
-import { cn } from "@/lib/utils"
 import { fmtDur, fmtTokens } from "@/lib/utils"
 import type { Step } from "../types"
-
-function renderMd(text: string): string {
-  let h = text.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">")
-  h = h.replace(/```(\w*)\n([\s\S]*?)```/g, (_, __, c) => `<pre class="bg-zinc-900 border border-border rounded p-2 overflow-x-auto my-1 text-xs">${c.replace(/\n$/, "")}</pre>`)
-  h = h.replace(/`([^`]+)`/g, '<code class="bg-zinc-900 px-1 py-0.5 rounded text-xs">$1</code>')
-  h = h.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-  h = h.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-400 hover:underline">$1</a>')
-  return h
-}
 
 function Params({ params }: { params: Record<string, unknown> | null }) {
   if (!params) return null
   const entries = Object.entries(params)
   if (entries.length === 0) return null
   return (
-    <div className="text-xs text-muted-foreground mono mt-0.5">
+    <div className="text-[11px] text-muted-foreground font-mono mt-1 leading-relaxed">
       {entries.map(([k, v], i) => {
         let val = typeof v === "string" ? v : v == null ? "null" : JSON.stringify(v)
-        if (val.length > 120) val = val.slice(0, 120) + "…"
-        return <span key={k}>{i > 0 && "  ·  "}<span className="text-zinc-600">{k}:</span> <span className="text-zinc-300">{val}</span></span>
+        if (val.length > 100) val = val.slice(0, 100) + "…"
+        return (
+          <span key={k}>
+            {i > 0 && " · "}
+            <span className="text-muted-foreground/60">{k}</span>{" "}
+            <span className="text-foreground/80">{val}</span>
+          </span>
+        )
       })}
     </div>
   )
+}
+
+function renderMd(text: string): string {
+  let h = text.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">")
+  h = h.replace(/```(\w*)\n([\s\S]*?)```/g, (_, __, c) => `<pre class="bg-zinc-900/60 border border-border rounded-md p-2.5 overflow-x-auto my-2 text-xs font-mono">${c.replace(/\n$/, "")}</pre>`)
+  h = h.replace(/`([^`]+)`/g, '<code class="bg-muted px-1 py-0.5 rounded text-xs font-mono">$1</code>')
+  h = h.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+  h = h.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-400 hover:underline">$1</a>')
+  return h
 }
 
 export function StepRow({ step }: { step: Step }) {
@@ -33,47 +38,63 @@ export function StepRow({ step }: { step: Step }) {
   const isThinking = step.type === "agent_response" && !step.text.trim()
   const isResponse = step.type === "agent_response" && step.text.trim()
   const isUser = step.type === "user_input"
-
-  const icon = isTool ? <Wrench className="w-3.5 h-3.5" /> : isThinking ? <Brain className="w-3.5 h-3.5" /> : isResponse ? <Bot className="w-3.5 h-3.5" /> : <MessageSquare className="w-3.5 h-3.5" />
-  const iconColor = isTool ? "text-blue-400" : isThinking ? "text-purple-400" : isResponse ? "text-green-400" : "text-muted-foreground"
-  const labelColor = isTool ? "text-blue-400" : isThinking ? "text-purple-400" : isResponse ? "text-green-400" : "text-muted-foreground"
-  const label = isTool ? step.tool : isThinking ? "thinking" : isResponse ? "response" : "prompt received"
-
   const isActive = step.state === "ACTIVE"
   const isDone = step.state === "DONE"
   const isError = step.state === "ERROR"
-  const stateIcon = isActive ? <Loader2 className="w-3 h-3 agy-pulse" /> : isDone ? <Check className="w-3 h-3 text-green-500" /> : isError ? <X className="w-3 h-3 text-destructive" /> : null
 
-  return (
-    <div className="relative pl-6 pr-3 py-1 group hover:bg-muted/30">
-      {/* left border accent */}
-      <div className={cn("absolute left-2 top-0 bottom-0 w-0.5", isTool ? "bg-blue-500/40" : isThinking ? "bg-purple-500/40" : isResponse ? "bg-green-500/40" : "bg-border")} />
-      {/* icon */}
-      <div className={cn("absolute left-1 top-1 w-4 h-4 flex items-center justify-center bg-background", iconColor)}>{icon}</div>
+  // ── user input: minimal ──
+  if (isUser) {
+    return <div className="px-3 py-1 text-xs text-muted-foreground/60">prompt received</div>
+  }
 
-      <div className="flex items-baseline gap-2">
-        <span className={cn("text-xs font-medium", labelColor)}>{label}</span>
-        <div className="ml-auto flex items-center gap-1.5">
-          {stateIcon}
-          {step.duration != null && <span className="text-[10px] text-muted-foreground mono">{fmtDur(step.duration)}</span>}
-          {isThinking && step.thinking > 0 && <span className="text-[10px] text-muted-foreground mono">{step.thinking.toLocaleString()} tokens</span>}
+  // ── thinking: one subtle line ──
+  if (isThinking) {
+    return (
+      <div className="px-3 py-1 text-xs text-muted-foreground/50 flex items-center gap-2">
+        <span className="w-1.5 h-1.5 rounded-full bg-purple-500/40" />
+        <span>thinking</span>
+        {step.thinking > 0 && <span className="font-mono">{step.thinking.toLocaleString()} tokens</span>}
+        {step.duration != null && <span className="font-mono">{fmtDur(step.duration)}</span>}
+      </div>
+    )
+  }
+
+  // ── tool call: compact Card ──
+  if (isTool) {
+    return (
+      <div className="px-3 py-1.5">
+        <Card className="py-0">
+          <div className="flex items-center gap-2 px-3 py-2">
+            <span className="font-mono text-xs text-blue-400">{step.tool}</span>
+            <span className="ml-auto flex items-center gap-1.5">
+              {isActive && <span className="w-1.5 h-1.5 rounded-full bg-blue-400 agy-pulse" />}
+              {isDone && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
+              {isError && <span className="w-1.5 h-1.5 rounded-full bg-red-500" />}
+              {step.duration != null && <span className="font-mono text-[10px] text-muted-foreground">{fmtDur(step.duration)}</span>}
+            </span>
+          </div>
+          <div className="px-3 pb-2">
+            <Params params={step.params} />
+            {step.output && <div className="text-[11px] text-emerald-500/70 font-mono mt-1">→ {step.output.slice(0, 200)}</div>}
+            {step.error && <div className="text-[11px] text-red-400 font-mono mt-1">✗ {step.error}</div>}
+          </div>
+        </Card>
+      </div>
+    )
+  }
+
+  // ── AI response: clean text ──
+  if (isResponse) {
+    return (
+      <div className="px-3 py-1.5">
+        <div className="text-sm leading-relaxed prose-invert" dangerouslySetInnerHTML={{ __html: renderMd(step.text.trim()) }} />
+        <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground/60 font-mono">
+          {step.duration != null && <span>{fmtDur(step.duration)}</span>}
+          {step.usage && <span>{fmtTokens(step.usage)}</span>}
         </div>
       </div>
+    )
+  }
 
-      {/* params for tool */}
-      {isTool && <Params params={step.params} />}
-      {/* output */}
-      {isTool && step.output && <div className="text-xs text-green-500/80 mono mt-0.5">→ {step.output.slice(0, 200)}</div>}
-      {/* error */}
-      {isTool && step.error && <div className="text-xs text-destructive mono mt-0.5">✗ {step.error}</div>}
-      {/* AI response text */}
-      {isResponse && (
-        <div className="text-sm mt-1 prose-invert" dangerouslySetInnerHTML={{ __html: renderMd(step.text.trim()) }} />
-      )}
-      {/* per-step tokens */}
-      {(isThinking || isResponse) && step.usage && (
-        <div className="text-[10px] text-muted-foreground mono mt-0.5">{fmtTokens(step.usage)}</div>
-      )}
-    </div>
-  )
+  return null
 }
