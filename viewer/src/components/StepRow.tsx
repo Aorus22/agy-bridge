@@ -1,19 +1,25 @@
+import { useState } from "react"
 import {
-  Wrench,
-  Terminal,
-  FileEdit,
-  FilePlus,
-  FileText,
-  Search,
-  Globe,
-  Brain,
+  ChevronDown,
+  ChevronRight,
   Check,
   X,
   Loader2,
+  Brain,
+  Terminal,
+  FilePlus,
+  FileEdit,
+  FileText,
+  Search,
+  Globe,
+  Wrench,
 } from "lucide-react"
-import { Card } from "./ui/card"
-import { fmtDur, fmtTokens } from "@/lib/utils"
+import { cn, fmtDur, fmtTokens } from "@/lib/utils"
 import type { Step } from "../types"
+
+function basename(p: string): string {
+  return p.split("/").pop() || p
+}
 
 function getToolIcon(toolName: string) {
   const name = (toolName || "").toLowerCase()
@@ -50,23 +56,131 @@ function getToolIcon(toolName: string) {
   return Wrench
 }
 
-function Params({ params }: { params: Record<string, unknown> | null }) {
+function getToolSummary(toolName: string, params: Record<string, unknown> | null): string {
+  if (!params) return ""
+  const name = (toolName || "").toLowerCase()
+
+  // Web search
+  if (name.includes("search_web") || name.includes("web_search")) {
+    return "web search"
+  }
+
+  // URL tools
+  if (name.includes("url") || name.includes("http") || name.includes("fetch") || name.includes("web")) {
+    const urlVal = params.Url || params.url || params.URL
+    if (typeof urlVal === "string" && urlVal) {
+      return urlVal.length > 50 ? urlVal.slice(0, 50) + "…" : urlVal
+    }
+  }
+
+  // Search / grep / find: show pattern
+  if (name.includes("grep") || name.includes("search") || name.includes("find")) {
+    const patternVal =
+      params.Pattern ||
+      params.pattern ||
+      params.Query ||
+      params.query ||
+      params.search_term ||
+      params.regex
+    if (typeof patternVal === "string" && patternVal) {
+      return patternVal.length > 50 ? patternVal.slice(0, 50) + "…" : patternVal
+    }
+  }
+
+  // Run command / terminal / shell: show command
+  if (
+    name.includes("command") ||
+    name.includes("terminal") ||
+    name.includes("bash") ||
+    name.includes("shell") ||
+    name.includes("exec")
+  ) {
+    const cmdVal = params.CommandLine || params.command || params.cmd
+    if (typeof cmdVal === "string" && cmdVal) {
+      const clean = cmdVal.trim().replace(/\s+/g, " ")
+      return clean.length > 60 ? clean.slice(0, 60) + "…" : clean
+    }
+  }
+
+  // File operations: write_to_file, view_file, replace_file_content, etc.
+  const filePathVal =
+    params.TargetFile ||
+    params.AbsolutePath ||
+    params.file_path ||
+    params.filePath ||
+    params.path ||
+    params.file ||
+    params.TargetDirectory ||
+    params.DirectoryPath ||
+    params.SearchDirectory ||
+    params.dir_path
+  if (typeof filePathVal === "string" && filePathVal) {
+    return basename(filePathVal)
+  }
+
+  // General command fallback
+  const genericCmd = params.CommandLine || params.command || params.cmd
+  if (typeof genericCmd === "string" && genericCmd) {
+    const clean = genericCmd.trim().replace(/\s+/g, " ")
+    return clean.length > 60 ? clean.slice(0, 60) + "…" : clean
+  }
+
+  // General pattern / query fallback
+  const genericPattern = params.Pattern || params.pattern || params.Query || params.query
+  if (typeof genericPattern === "string" && genericPattern) {
+    return genericPattern.length > 50 ? genericPattern.slice(0, 50) + "…" : genericPattern
+  }
+
+  // Fallback: first param value
+  const entries = Object.entries(params)
+  if (entries.length > 0) {
+    const [, firstVal] = entries[0]
+    if (firstVal != null) {
+      const str = typeof firstVal === "string" ? firstVal : JSON.stringify(firstVal)
+      if (str.startsWith("/") && str.includes("/")) {
+        return basename(str)
+      }
+      return str.length > 50 ? str.slice(0, 50) + "…" : str
+    }
+  }
+
+  return ""
+}
+
+function ExpandedParams({ params }: { params: Record<string, unknown> | null }) {
   if (!params) return null
   const entries = Object.entries(params)
   if (entries.length === 0) return null
+
   return (
-    <div className="font-mono text-[11px] leading-relaxed break-all">
-      {entries.map(([k, v], i) => {
-        let val = typeof v === "string" ? v : v == null ? "null" : JSON.stringify(v)
-        if (val.length > 120) val = val.slice(0, 120) + "…"
-        return (
-          <span key={k}>
-            {i > 0 && <span className="text-muted-foreground/30 mx-1.5">·</span>}
-            <span className="text-muted-foreground/60">{k}=</span>
-            <span className="text-foreground/75">{val}</span>
-          </span>
-        )
-      })}
+    <div className="space-y-1.5 font-mono text-[11px] leading-relaxed">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground/40 font-semibold select-none">
+        Parameters
+      </div>
+      <div className="pl-2.5 border-l-2 border-border/50 space-y-1.5">
+        {entries.map(([k, v]) => {
+          const isMultiline = typeof v === "string" && v.includes("\n")
+          const val = typeof v === "string" ? v : v == null ? "null" : JSON.stringify(v, null, 2)
+
+          if (isMultiline || val.length > 200) {
+            return (
+              <div key={k} className="space-y-0.5">
+                <span className="text-muted-foreground/70">{k}:</span>
+                <pre className="text-foreground/85 bg-background/50 border border-border/40 rounded p-2 text-[11px] font-mono whitespace-pre-wrap break-words max-h-48 overflow-y-auto">
+                  {val}
+                </pre>
+              </div>
+            )
+          }
+
+          return (
+            <div key={k} className="text-[11px] break-words">
+              <span className="text-muted-foreground/70 mr-1.5">{k}:</span>
+              <span className="text-foreground/85 whitespace-pre-wrap break-all">{val}</span>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -95,6 +209,8 @@ function renderMd(text: string): string {
 }
 
 export function StepRow({ step }: { step: Step }) {
+  const [expanded, setExpanded] = useState(false)
+
   const isTool = step.type === "tool"
   const isThinking = step.type === "agent_response" && !step.text.trim()
   const isResponse = step.type === "agent_response" && !!step.text.trim()
@@ -128,20 +244,45 @@ export function StepRow({ step }: { step: Step }) {
     )
   }
 
-  // ── tool call: compact card with icon & status ──
+  // ── tool call: git-style collapsible row ──
   if (isTool) {
     const ToolIcon = getToolIcon(step.tool)
+    const summary = getToolSummary(step.tool, step.params)
     const hasParams = step.params && Object.keys(step.params).length > 0
 
     return (
-      <div className="px-4 py-1.5">
-        <Card className="bg-card/70 border-border/80 text-xs">
-          <div className="flex items-center gap-2 px-3 py-2">
+      <div className="px-4 py-0.5">
+        <div
+          className={cn(
+            "rounded-md border border-border/50 bg-card/40 hover:bg-card/70 transition-colors overflow-hidden",
+            expanded && "border-border/80 bg-card/60"
+          )}
+        >
+          <button
+            type="button"
+            onClick={() => setExpanded(!expanded)}
+            className={cn(
+              "w-full flex items-center gap-2 px-2.5 py-1.5 text-left text-xs select-none hover:bg-muted/30 transition-colors cursor-pointer",
+              expanded && "bg-muted/20"
+            )}
+          >
+            {expanded ? (
+              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" />
+            ) : (
+              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" />
+            )}
             <ToolIcon className="w-3.5 h-3.5 text-muted-foreground/70 shrink-0" />
-            <span className="font-mono text-xs text-foreground/90 font-medium">{step.tool || "tool"}</span>
-            <div className="ml-auto flex items-center gap-2">
+            <span className="font-mono text-xs text-foreground/90 font-medium shrink-0">
+              {step.tool || "tool"}
+            </span>
+            {summary && (
+              <span className="font-mono text-xs text-muted-foreground/70 truncate min-w-0">
+                {summary}
+              </span>
+            )}
+            <div className="ml-auto flex items-center gap-2 shrink-0">
               {step.duration != null && (
-                <span className="font-mono text-[10px] text-muted-foreground/60">
+                <span className="font-mono text-[10px] text-muted-foreground/50">
                   {fmtDur(step.duration)}
                 </span>
               )}
@@ -149,23 +290,39 @@ export function StepRow({ step }: { step: Step }) {
               {isDone && <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
               {isError && <X className="w-3.5 h-3.5 text-red-400 shrink-0" />}
             </div>
-          </div>
-          {(hasParams || step.output || step.error) && (
-            <div className="px-3 pb-2.5 pt-0 space-y-1.5">
-              {hasParams && <Params params={step.params} />}
+          </button>
+
+          {expanded && (
+            <div className="border-t border-border/40 bg-muted/20 px-3 py-2.5 space-y-2.5 text-xs">
+              {hasParams && <ExpandedParams params={step.params} />}
               {step.output && (
-                <div className="font-mono text-[11px] text-emerald-400/80 bg-emerald-950/20 border border-emerald-900/30 rounded px-2 py-1 max-h-32 overflow-y-auto whitespace-pre-wrap break-words">
-                  {step.output.length > 400 ? step.output.slice(0, 400) + "…" : step.output}
+                <div className="space-y-1">
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/40 font-semibold select-none">
+                    Output
+                  </div>
+                  <div className="font-mono text-[11px] text-emerald-400/90 bg-emerald-950/20 border border-emerald-900/30 rounded px-2.5 py-1.5 max-h-48 overflow-y-auto whitespace-pre-wrap break-words">
+                    {step.output}
+                  </div>
                 </div>
               )}
               {step.error && (
-                <div className="font-mono text-[11px] text-red-400/90 bg-red-950/20 border border-red-900/30 rounded px-2 py-1 whitespace-pre-wrap break-words">
-                  {step.error}
+                <div className="space-y-1">
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-red-400/60 font-semibold select-none">
+                    Error
+                  </div>
+                  <div className="font-mono text-[11px] text-red-400/90 bg-red-950/20 border border-red-900/30 rounded px-2.5 py-1.5 max-h-48 overflow-y-auto whitespace-pre-wrap break-words">
+                    {step.error}
+                  </div>
+                </div>
+              )}
+              {!hasParams && !step.output && !step.error && (
+                <div className="text-[11px] font-mono text-muted-foreground/40 italic">
+                  No additional parameters or output
                 </div>
               )}
             </div>
           )}
-        </Card>
+        </div>
       </div>
     )
   }
