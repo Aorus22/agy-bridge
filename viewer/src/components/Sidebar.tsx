@@ -58,27 +58,27 @@ export function Sidebar({
   }
 
   return (
-    <ScrollArea className="h-full">
-      <div className="py-1 px-1.5 space-y-1">
+    <ScrollArea className="h-full w-full min-w-0">
+      <div className="py-1 px-1.5 space-y-1 min-w-0 max-w-full overflow-hidden">
         {Array.from(groups.entries()).map(([proj, rs]) => {
           const isCollapsed = collapsed.has(proj)
           return (
-            <Collapsible key={proj} open={!isCollapsed} onOpenChange={() => toggle(proj)}>
-              <CollapsibleTrigger className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded select-none">
+            <Collapsible key={proj} open={!isCollapsed} onOpenChange={() => toggle(proj)} className="min-w-0 max-w-full">
+              <CollapsibleTrigger className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded select-none min-w-0 overflow-hidden">
                 <ChevronRight
                   className={cn(
                     "w-3.5 h-3.5 text-muted-foreground/50 transition-transform duration-150 shrink-0",
                     !isCollapsed && "rotate-90"
                   )}
                 />
-                <span className="flex-1 truncate text-left" title={proj}>
+                <span className="flex-1 truncate text-left min-w-0" title={proj}>
                   {shortPath(proj)}
                 </span>
                 <span className="text-[10px] text-muted-foreground/40 font-mono tabular-nums shrink-0">
                   {rs.length}
                 </span>
               </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-0.5 pt-0.5">
+              <CollapsibleContent className="space-y-0.5 pt-0.5 min-w-0 max-w-full overflow-hidden">
                 {rs
                   .slice()
                   .sort((a, b) => b.start - a.start)
@@ -89,14 +89,14 @@ export function Sidebar({
                         key={r.file}
                         onClick={() => onSelect(r.file)}
                         className={cn(
-                          "w-full flex items-center gap-2 pl-6 pr-2.5 py-1.5 text-xs rounded transition-colors text-left cursor-pointer",
+                          "w-full flex items-center gap-2 pl-6 pr-2.5 py-1.5 text-xs rounded transition-colors text-left cursor-pointer min-w-0 overflow-hidden",
                           isSelected
                             ? "bg-accent text-accent-foreground font-medium"
                             : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
                         )}
                       >
                         <StatusIcon status={r.status} />
-                        <span className="font-mono text-[11px] flex-1 truncate">
+                        <span className="font-mono text-[11px] flex-1 truncate min-w-0">
                           {r.convId ? r.convId.slice(0, 8) : shortPath(r.file)}
                         </span>
                         <span className="font-mono text-[10px] text-muted-foreground/40 shrink-0 tabular-nums">

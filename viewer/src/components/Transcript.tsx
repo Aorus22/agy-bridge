@@ -1,6 +1,5 @@
 import { ScrollArea } from "./ui/scroll-area"
 import { Badge } from "./ui/badge"
-import { Separator } from "./ui/separator"
 import { StepRow } from "./StepRow"
 import { fmtDur, fmtTokens, shortPath } from "@/lib/utils"
 import type { Run } from "../types"
@@ -23,25 +22,25 @@ export function Transcript({ run }: { run: Run | null }) {
       : ""
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background">
+    <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background max-w-full">
       {/* Header: Conv ID + cwd (truncated) + elapsed */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border text-xs min-h-[41px]">
-        <span className="text-foreground font-medium truncate">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border text-xs min-h-[41px] min-w-0 max-w-full">
+        <span className="text-foreground font-medium truncate min-w-0 flex-1 mr-2" title={run.convId || run.file}>
           {run.convId || shortPath(run.file)}
         </span>
-        <div className="flex items-center gap-3 text-muted-foreground/60 text-xs shrink-0 ml-4">
+        <div className="flex items-center gap-3 text-muted-foreground/60 text-xs shrink-0">
           {run.cwd && (
-            <span className="truncate max-w-[200px]" title={run.cwd}>
+            <span className="truncate max-w-[120px] sm:max-w-[200px]" title={run.cwd}>
               {shortPath(run.cwd)}
             </span>
           )}
-          {elapsed && <span>{elapsed}</span>}
+          {elapsed && <span className="shrink-0 font-mono">{elapsed}</span>}
         </div>
       </div>
 
       {/* Steps */}
-      <ScrollArea className="flex-1">
-        <div className="py-2.5 space-y-1">
+      <ScrollArea className="flex-1 min-w-0 max-w-full">
+        <div className="py-2.5 space-y-1 min-w-0 max-w-full overflow-hidden">
           {steps.length === 0 && (
             <div className="flex items-center justify-center h-32 text-muted-foreground/40 text-xs">
               Waiting for events…
@@ -55,14 +54,14 @@ export function Transcript({ run }: { run: Run | null }) {
 
       {/* Result Footer: Status badge + duration + turns + token breakdown only */}
       {run.result && (
-        <div className="px-4 py-3 border-t border-border bg-card/20 space-y-2.5">
-          <div className="flex items-center justify-between gap-2">
-            <Badge variant={run.result.status === "SUCCESS" ? "success" : "error"}>
+        <div className="px-4 py-3 border-t border-border bg-card/20 space-y-2.5 min-w-0 max-w-full overflow-hidden">
+          <div className="flex items-center justify-between gap-2 min-w-0">
+            <Badge variant={run.result.status === "SUCCESS" ? "success" : "error"} className="shrink-0">
               {run.result.status || "COMPLETED"}
             </Badge>
-            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/60">
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/60 shrink-0">
               {run.result.duration_seconds != null && (
-                <span>{fmtDur(run.result.duration_seconds)}</span>
+                <span className="font-mono">{fmtDur(run.result.duration_seconds)}</span>
               )}
               {run.result.num_turns != null && (
                 <>
@@ -76,18 +75,18 @@ export function Transcript({ run }: { run: Run | null }) {
           </div>
 
           {run.result.usage && (
-            <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted-foreground/50">
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted-foreground/50 min-w-0 break-words">
               {fmtTokens(run.result.usage)
                 .split("  ")
                 .filter(Boolean)
                 .map((t, i) => (
-                  <span key={i}>{t}</span>
+                  <span key={i} className="break-all">{t}</span>
                 ))}
             </div>
           )}
 
           {run.result.error && (
-            <div className="text-xs text-red-400 bg-red-950/20 border border-red-900/30 rounded px-2.5 py-1.5 whitespace-pre-wrap break-words">
+            <div className="text-xs text-red-400 bg-red-950/20 border border-red-900/30 rounded px-2.5 py-1.5 whitespace-pre-wrap break-all min-w-0 max-w-full overflow-x-auto">
               {run.result.error}
             </div>
           )}

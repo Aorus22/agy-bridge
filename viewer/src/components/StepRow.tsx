@@ -153,20 +153,20 @@ function ExpandedParams({ params }: { params: Record<string, unknown> | null }) 
   if (entries.length === 0) return null
 
   return (
-    <div className="space-y-1.5 font-mono text-[11px] leading-relaxed">
+    <div className="space-y-1.5 font-mono text-[11px] leading-relaxed min-w-0 max-w-full overflow-hidden">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground/40 font-semibold select-none">
         Parameters
       </div>
-      <div className="pl-2.5 border-l-2 border-border/50 space-y-1.5">
+      <div className="pl-2.5 border-l-2 border-border/50 space-y-1.5 min-w-0 max-w-full overflow-hidden">
         {entries.map(([k, v]) => {
           const isMultiline = typeof v === "string" && v.includes("\n")
           const val = typeof v === "string" ? v : v == null ? "null" : JSON.stringify(v, null, 2)
 
           if (isMultiline || val.length > 200) {
             return (
-              <div key={k} className="space-y-0.5">
-                <span className="text-muted-foreground/70">{k}:</span>
-                <pre className="text-foreground/85 bg-background/50 border border-border/40 rounded p-2 text-[11px] font-mono whitespace-pre-wrap break-words max-h-48 overflow-y-auto">
+              <div key={k} className="space-y-0.5 min-w-0 max-w-full">
+                <span className="text-muted-foreground/70 break-all">{k}:</span>
+                <pre className="text-foreground/85 bg-background/50 border border-border/40 rounded p-2 text-[11px] font-mono whitespace-pre-wrap break-all max-h-48 overflow-y-auto overflow-x-auto max-w-full min-w-0">
                   {val}
                 </pre>
               </div>
@@ -174,8 +174,8 @@ function ExpandedParams({ params }: { params: Record<string, unknown> | null }) 
           }
 
           return (
-            <div key={k} className="text-[11px] break-words">
-              <span className="text-muted-foreground/70 mr-1.5">{k}:</span>
+            <div key={k} className="text-[11px] break-all min-w-0 max-w-full">
+              <span className="text-muted-foreground/70 mr-1.5 shrink-0">{k}:</span>
               <span className="text-foreground/85 whitespace-pre-wrap break-all">{val}</span>
             </div>
           )
@@ -193,17 +193,17 @@ function renderMd(text: string): string {
   h = h.replace(
     /```(\w*)\n([\s\S]*?)```/g,
     (_, __, code) =>
-      `<pre class="bg-card border border-border rounded-md p-2.5 overflow-x-auto my-2 text-xs font-mono text-foreground/90"><code>${code.replace(/\n$/, "")}</code></pre>`
+      `<pre class="bg-card border border-border rounded-md p-2.5 overflow-x-auto max-w-full my-2 text-xs font-mono text-foreground/90"><code>${code.replace(/\n$/, "")}</code></pre>`
   )
   h = h.replace(
     /`([^`]+)`/g,
-    '<code class="bg-muted px-1 py-0.5 rounded text-xs font-mono border border-border/40 text-foreground/90">$1</code>'
+    '<code class="bg-muted px-1 py-0.5 rounded text-xs font-mono border border-border/40 text-foreground/90 break-all">$1</code>'
   )
   h = h.replace(/\*\*([^*]+)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>')
   h = h.replace(/(^|[^*])\*([^*]+)\*/g, '$1<em class="text-foreground/80">$2</em>')
   h = h.replace(
     /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" target="_blank" rel="noreferrer" class="text-primary hover:underline">$1</a>'
+    '<a href="$2" target="_blank" rel="noreferrer" class="text-primary hover:underline break-all">$1</a>'
   )
   return h
 }
@@ -221,22 +221,22 @@ export function StepRow({ step }: { step: Step }) {
 
   // ── user input: minimal ──
   if (isUser) {
-    return <div className="px-4 py-1 text-xs font-mono text-muted-foreground/40">prompt received</div>
+    return <div className="px-4 py-1 text-xs font-mono text-muted-foreground/40 min-w-0 break-words">prompt received</div>
   }
 
   // ── thinking: subtle line with icon ──
   if (isThinking) {
     return (
-      <div className="px-4 py-1 flex items-center gap-2 text-xs text-muted-foreground/50">
+      <div className="px-4 py-1 flex items-center gap-2 text-xs text-muted-foreground/50 min-w-0 overflow-hidden">
         <Brain className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />
-        <span>thinking</span>
+        <span className="shrink-0">thinking</span>
         {step.thinking > 0 && (
-          <span className="font-mono text-[11px] text-muted-foreground/40">
+          <span className="font-mono text-[11px] text-muted-foreground/40 truncate min-w-0">
             {step.thinking.toLocaleString()} tokens
           </span>
         )}
         {step.duration != null && (
-          <span className="font-mono text-[11px] text-muted-foreground/40">
+          <span className="font-mono text-[11px] text-muted-foreground/40 shrink-0 ml-auto">
             {fmtDur(step.duration)}
           </span>
         )}
@@ -251,10 +251,10 @@ export function StepRow({ step }: { step: Step }) {
     const hasParams = step.params && Object.keys(step.params).length > 0
 
     return (
-      <div className="px-4 py-0.5">
+      <div className="px-4 py-0.5 min-w-0 max-w-full">
         <div
           className={cn(
-            "rounded-md border border-border/50 bg-card/40 hover:bg-card/70 transition-colors overflow-hidden",
+            "rounded-md border border-border/50 bg-card/40 hover:bg-card/70 transition-colors overflow-hidden min-w-0 max-w-full",
             expanded && "border-border/80 bg-card/60"
           )}
         >
@@ -262,7 +262,7 @@ export function StepRow({ step }: { step: Step }) {
             type="button"
             onClick={() => setExpanded(!expanded)}
             className={cn(
-              "w-full flex items-center gap-2 px-2.5 py-1.5 text-left text-xs select-none hover:bg-muted/30 transition-colors cursor-pointer",
+              "w-full flex items-center gap-2 px-2.5 py-1.5 text-left text-xs select-none hover:bg-muted/30 transition-colors cursor-pointer min-w-0 overflow-hidden",
               expanded && "bg-muted/20"
             )}
           >
@@ -276,7 +276,7 @@ export function StepRow({ step }: { step: Step }) {
               {step.tool || "tool"}
             </span>
             {summary && (
-              <span className="font-mono text-xs text-muted-foreground/70 truncate min-w-0">
+              <span className="font-mono text-xs text-muted-foreground/70 truncate min-w-0 flex-1">
                 {summary}
               </span>
             )}
@@ -293,26 +293,26 @@ export function StepRow({ step }: { step: Step }) {
           </button>
 
           {expanded && (
-            <div className="border-t border-border/40 bg-muted/20 px-3 py-2.5 space-y-2.5 text-xs">
+            <div className="border-t border-border/40 bg-muted/20 px-3 py-2.5 space-y-2.5 text-xs min-w-0 max-w-full overflow-hidden">
               {hasParams && <ExpandedParams params={step.params} />}
               {step.output && (
-                <div className="space-y-1">
+                <div className="space-y-1 min-w-0 max-w-full">
                   <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/40 font-semibold select-none">
                     Output
                   </div>
-                  <div className="font-mono text-[11px] text-emerald-400/90 bg-emerald-950/20 border border-emerald-900/30 rounded px-2.5 py-1.5 max-h-48 overflow-y-auto whitespace-pre-wrap break-words">
+                  <pre className="font-mono text-[11px] text-emerald-400/90 bg-emerald-950/20 border border-emerald-900/30 rounded px-2.5 py-1.5 max-h-48 overflow-y-auto overflow-x-auto whitespace-pre-wrap break-all min-w-0 max-w-full">
                     {step.output}
-                  </div>
+                  </pre>
                 </div>
               )}
               {step.error && (
-                <div className="space-y-1">
+                <div className="space-y-1 min-w-0 max-w-full">
                   <div className="text-[10px] font-mono uppercase tracking-wider text-red-400/60 font-semibold select-none">
                     Error
                   </div>
-                  <div className="font-mono text-[11px] text-red-400/90 bg-red-950/20 border border-red-900/30 rounded px-2.5 py-1.5 max-h-48 overflow-y-auto whitespace-pre-wrap break-words">
+                  <pre className="font-mono text-[11px] text-red-400/90 bg-red-950/20 border border-red-900/30 rounded px-2.5 py-1.5 max-h-48 overflow-y-auto overflow-x-auto whitespace-pre-wrap break-all min-w-0 max-w-full">
                     {step.error}
-                  </div>
+                  </pre>
                 </div>
               )}
               {!hasParams && !step.output && !step.error && (
@@ -330,15 +330,15 @@ export function StepRow({ step }: { step: Step }) {
   // ── AI response: clean markdown text ──
   if (isResponse) {
     return (
-      <div className="px-4 py-2 space-y-1">
+      <div className="px-4 py-2 space-y-1 min-w-0 max-w-full overflow-hidden">
         <div
-          className="text-sm leading-relaxed text-foreground/90 break-words whitespace-pre-wrap font-sans"
+          className="text-sm leading-relaxed text-foreground/90 break-words whitespace-pre-wrap font-sans min-w-0 max-w-full overflow-hidden [overflow-wrap:anywhere]"
           dangerouslySetInnerHTML={{ __html: renderMd(step.text.trim()) }}
         />
         {(step.duration != null || step.usage) && (
-          <div className="flex items-center gap-3 pt-0.5 text-[10px] text-muted-foreground/50 font-mono">
-            {step.duration != null && <span>{fmtDur(step.duration)}</span>}
-            {step.usage && <span>{fmtTokens(step.usage)}</span>}
+          <div className="flex items-center gap-3 pt-0.5 text-[10px] text-muted-foreground/50 font-mono min-w-0 flex-wrap">
+            {step.duration != null && <span className="shrink-0">{fmtDur(step.duration)}</span>}
+            {step.usage && <span className="break-all">{fmtTokens(step.usage)}</span>}
           </div>
         )}
       </div>

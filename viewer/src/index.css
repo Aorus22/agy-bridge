@@ -22,9 +22,44 @@
 }
 
 @layer base {
-  * { @apply border-border; }
-  body { @apply bg-background text-foreground; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
-  code, pre, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+  html,
+  body {
+    @apply bg-background text-foreground;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
+  }
+  #root {
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
+    min-height: 100vh;
+  }
+  code, pre, .mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  pre {
+    overflow-x: auto;
+    max-width: 100%;
+  }
+  code {
+    word-break: break-word;
+  }
+}
+
+/* Radix ScrollArea viewport fix for flex and table sizing */
+[data-radix-scroll-area-viewport] {
+  overflow-x: hidden !important;
+}
+[data-radix-scroll-area-viewport] > div {
+  display: block !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
 }
 
 /* scrollbars */
