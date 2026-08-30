@@ -4,6 +4,16 @@ import { StepRow } from "./StepRow"
 import { fmtDur, fmtTokens, shortPath } from "@/lib/utils"
 import type { Run } from "../types"
 
+function renderMd(text: string): string {
+  let h = text.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">")
+  h = h.replace(/```(\w*)\n([\s\S]*?)```/g, (_, __, c) => `<pre class="bg-muted/40 border border-border rounded-md p-2 overflow-x-auto max-w-full my-1.5 text-xs">${c.replace(/\n$/, "")}</pre>`)
+  h = h.replace(/`([^`]+)`/g, '<code class="bg-muted px-1 py-0.5 rounded text-xs">$1</code>')
+  h = h.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+  h = h.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-400 hover:underline">$1</a>')
+  h = h.replace(/\n/g, "<br/>")
+  return h
+}
+
 export function Transcript({ run }: { run: Run | null }) {
   if (!run) {
     return (
@@ -86,9 +96,10 @@ export function Transcript({ run }: { run: Run | null }) {
           )}
 
           {run.result.error && (
-            <div className="text-xs text-red-400 bg-red-950/20 border border-red-900/30 rounded px-2.5 py-1.5 whitespace-pre-wrap break-all min-w-0 max-w-full overflow-x-auto">
-              {run.result.error}
-            </div>
+            <div
+              className="text-xs text-red-400 bg-red-950/20 border border-red-900/30 rounded px-2.5 py-1.5 break-words min-w-0 max-w-full overflow-x-auto"
+              dangerouslySetInnerHTML={{ __html: renderMd(run.result.error) }}
+            />
           )}
         </div>
       )}
