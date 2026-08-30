@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 80%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 80%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 98%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 52%;
+    --accent: 0 0% 14%;
+    --accent-foreground: 0 0% 80%;
+    --destructive: 0 72% 56%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 18%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  code, pre, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+}
+
+/* scrollbars */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(0 0% 22%); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(0 0% 30%); }
+
+/* pulse animation for running state */
+@keyframes agy-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1); }
+}
+.agy-pulse { animation: agy-pulse 1s ease-in-out infinite; }

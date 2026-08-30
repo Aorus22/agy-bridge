@@ -98,15 +98,38 @@ const server = createServer((req, res) => {
     return
   }
 
-  // Serve the HTML page
+  // Serve built app (Vite dist/)
+  const distDir = pjoin(__dirname, "dist")
   if (req.url === "/" || req.url === "/index.html") {
     try {
-      const html = readFileSync(pjoin(__dirname, "index.html"), "utf8")
+      const html = readFileSync(pjoin(distDir, "index.html"), "utf8")
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" })
       res.end(html)
     } catch {
       res.writeHead(404)
-      res.end("index.html not found")
+      res.end("index.html not found — run `bun run build` first")
+    }
+    return
+  }
+
+  // Serve static assets (JS, CSS, etc.)
+  if (req.url?.startsWith("/assets/")) {
+    try {
+      const filePath = pjoin(distDir, req.url)
+      const content = readFileSync(filePath)
+      const ext = req.url.split(".").pop()
+      const types: Record<string, string> = {
+        js: "application/javascript",
+        css: "text/css",
+        svg: "image/svg+xml",
+        png: "image/png",
+        ico: "image/x-icon",
+      }
+      res.writeHead(200, { "Content-Type": types[ext || ""] || "application/octet-stream" })
+      res.end(content)
+    } catch {
+      res.writeHead(404)
+      res.end("not found")
     }
     return
   }
