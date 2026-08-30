@@ -6,6 +6,18 @@ import { dirname } from "node:path"
 import os from "node:os"
 import path from "node:path"
 
+/**
+ * opencode custom tool: delegates to Antigravity (agy) as a blocking one-shot.
+ * Self-contained — copy this single file to ~/.config/opencode/tools/ .
+ *
+ * Uses opencode's context.metadata() for live progress (TUI title updates while
+ * agy runs), which MCP does not have — that's why this opencode-specific tool
+ * exists alongside the portable MCP server (mcp/server.ts).
+ *
+ * Core logic also lives in src/core.ts (shared with the MCP server). If you
+ * change behavior here, mirror it there.
+ */
+
 // agy binary + defaults (mirror mcp-server-google-antigravity/index.js)
 const AGY_BIN = process.env.AGY_PATH || "agy"
 const DEFAULT_AUTO_APPROVE = (process.env.AGY_AUTO_APPROVE || "true").toLowerCase() !== "false"
@@ -18,8 +30,7 @@ const DEPTH_PREFIX = {
   high: "Think step by step very carefully before answering.",
 }
 
-// One line of agy `--output-format stream-json`.
-// Schema captured against agy 1.1.13+; unknown extra fields are ignored.
+// One line of agy `--output-format stream-json` (agy 1.1.13+).
 interface AgyStreamEvent {
   event?: string
   conversation_id?: string
@@ -53,7 +64,6 @@ function extractLastCodeBlock(text: string): string {
   if (open === -1) return text
   let inner = text.slice(open + 3, close)
   const nl = inner.indexOf("\n")
-  // strip optional language tag on the opening fence line
   if (nl > -1 && /^[a-zA-Z0-9_+.#-]*$/.test(inner.slice(0, nl).trim())) inner = inner.slice(nl + 1)
   return inner.trim()
 }
@@ -140,7 +150,6 @@ export default tool({
         /* best-effort */
       }
     }
-    // start the file fresh for this call
     try {
       appendFileSync(teePath, "")
     } catch {
@@ -175,6 +184,7 @@ export default tool({
     let stderr = ""
     let turnError = ""
     let lastTail = ""
+    let usage: { input_tokens?: number; output_tokens?: number; cache_read_tokens?: number } | undefined
 
     // cancel -> kill agy
     const onAbort = () => {
@@ -234,6 +244,7 @@ export default tool({
           resultText = r.response
           lastTail = r.response
         }
+        if (r.usage) usage = r.usage
         // sticky: a later SUCCESS must not erase an earlier failure
         if (r.status && r.status !== "SUCCESS") turnError = turnError || r.status
         if (typeof r.error === "string" && r.error.trim()) turnError = r.error.trim()
@@ -289,7 +300,7 @@ export default tool({
         resolve({
           title: "agy done",
           output,
-          metadata: { conversation_id: conversationId, tee_file: teePath },
+          metadata: { conversation_id: conversationId, tee_file: teePath, usage },
         })
       })
       proc.on("error", (err) => reject(err))

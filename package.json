@@ -1,18 +1,29 @@
 {
   "name": "opencode-agy",
   "version": "1.0.0",
-  "description": "opencode custom tool that delegates to Antigravity (agy) as a blocking one-shot — no polling, live progress, full result returned.",
-  "keywords": ["opencode", "opencode-tool", "antigravity", "agy", "gemini", "mcp-alternative"],
+  "description": "Delegate tasks to Antigravity (agy / Gemini) as a blocking one-shot — no polling, full result returned. Ships as both an opencode custom tool (live progress) and a portable MCP server.",
+  "keywords": ["opencode", "opencode-tool", "antigravity", "agy", "gemini", "mcp", "mcp-server"],
   "license": "MIT",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/user/opencode-agy"
   },
-  "files": ["tools/agy.ts", "README.md", "LICENSE"],
+  "files": ["src/core.ts", "tools/agy.ts", "mcp/server.ts", "README.md", "LICENSE"],
+  "scripts": {
+    "check": "tsc --noEmit",
+    "mcp": "node --experimental-strip-types mcp/server.ts"
+  },
   "peerDependencies": {
-    "@opencode-ai/plugin": "*"
+    "@opencode-ai/plugin": "*",
+    "@modelcontextprotocol/sdk": ">=1.30.0",
+    "zod": ">=3.0.0"
   },
   "peerDependenciesMeta": {
     "@opencode-ai/plugin": { "optional": true }
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^3.0.0"
   }
 }
