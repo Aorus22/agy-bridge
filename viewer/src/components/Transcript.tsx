@@ -1,3 +1,4 @@
+import { useRef, useEffect } from "react"
 import { Loader2 } from "lucide-react"
 import { ScrollArea } from "./ui/scroll-area"
 import { Badge } from "./ui/badge"
@@ -16,6 +17,22 @@ function renderMd(text: string): string {
 }
 
 export function Transcript({ run }: { run: Run | null }) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
+  const prevStepCount = useRef(0)
+
+  // Auto-scroll to bottom when new steps arrive
+  useEffect(() => {
+    if (!run) return
+    const currentStepCount = run.steps.size
+    if (currentStepCount > prevStepCount.current) {
+      prevStepCount.current = currentStepCount
+      // scroll the ScrollArea viewport to bottom
+      const viewport = scrollRef.current?.querySelector("[data-radix-scroll-area-viewport]")
+      if (viewport) viewport.scrollTop = viewport.scrollHeight
+    }
+  }, [run])
+
   if (!run) {
     return (
       <div className="flex-1 flex items-center justify-center text-muted-foreground/40 text-xs animate-fade-in">
@@ -57,7 +74,7 @@ export function Transcript({ run }: { run: Run | null }) {
       </div>
 
       {/* Steps */}
-      <ScrollArea className="flex-1 min-w-0 max-w-full">
+      <ScrollArea ref={scrollRef} className="flex-1 min-w-0 max-w-full">
         <div className="py-2.5 space-y-1 min-w-0 max-w-full overflow-hidden">
           {/* Prompt — inside scroll area, scrolls with content */}
           {run.promptText && (
