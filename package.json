@@ -1,0 +1,18 @@
+{
+  "name": "opencode-agy",
+  "version": "1.0.0",
+  "description": "opencode custom tool that delegates to Antigravity (agy) as a blocking one-shot — no polling, live progress, full result returned.",
+  "keywords": ["opencode", "opencode-tool", "antigravity", "agy", "gemini", "mcp-alternative"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/user/opencode-agy"
+  },
+  "files": ["tools/agy.ts", "README.md", "LICENSE"],
+  "peerDependencies": {
+    "@opencode-ai/plugin": "*"
+  },
+  "peerDependenciesMeta": {
+    "@opencode-ai/plugin": { "optional": true }
+  }
+}
