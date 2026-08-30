@@ -37,6 +37,11 @@ export interface AgyEvent {
   }
 }
 
+export interface DiffLine {
+  type: "add" | "del" | "ctx"
+  text: string
+}
+
 export interface Step {
   idx: number
   type: string
@@ -48,6 +53,7 @@ export interface Step {
   error: string | null
   duration: number | null
   thinking: number
+  diff?: DiffLine[] | null
   usage: AgyUsage | null
 }
 

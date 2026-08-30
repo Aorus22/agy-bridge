@@ -15,7 +15,7 @@ import {
   Wrench,
 } from "lucide-react"
 import { cn, fmtDur, fmtTokens } from "@/lib/utils"
-import type { Step } from "../types"
+import type { Step, DiffLine } from "../types"
 
 function basename(p: string): string {
   return p.split("/").pop() || p
@@ -185,6 +185,174 @@ function ExpandedParams({ params }: { params: Record<string, unknown> | null }) 
   )
 }
 
+function getDiffFilename(params: Record<string, unknown> | null): string {
+  if (!params) return "file"
+  const filePathVal =
+    params.TargetFile ||
+    params.targetFile ||
+    params.AbsolutePath ||
+    params.absolutePath ||
+    params.file_path ||
+    params.filePath ||
+    params.path ||
+    params.file ||
+    params.TargetDirectory ||
+    params.DirectoryPath
+  if (typeof filePathVal === "string" && filePathVal) {
+    return basename(filePathVal)
+  }
+  return "file"
+}
+
+interface DisplayLine extends DiffLine {
+  isDivider?: boolean
+  key: string | number
+}
+
+function extractHunks(diff: DiffLine[], contextRadius = 3): DisplayLine[] {
+  const changedIndices: number[] = []
+  for (let i = 0; i < diff.length; i++) {
+    if (diff[i].type !== "ctx") {
+      changedIndices.push(i)
+    }
+  }
+
+  if (changedIndices.length === 0) {
+    return diff.map((d, i) => ({ ...d, key: i }))
+  }
+
+  const included = new Set<number>()
+  for (const idx of changedIndices) {
+    const start = Math.max(0, idx - contextRadius)
+    const end = Math.min(diff.length - 1, idx + contextRadius)
+    for (let j = start; j <= end; j++) {
+      included.add(j)
+    }
+  }
+
+  const result: DisplayLine[] = []
+  let inGap = !included.has(0)
+
+  for (let i = 0; i < diff.length; i++) {
+    if (included.has(i)) {
+      if (inGap && result.length > 0) {
+        result.push({
+          type: "ctx",
+          text: "···",
+          isDivider: true,
+          key: `div-${i}`,
+        })
+      }
+      inGap = false
+      result.push({
+        ...diff[i],
+        key: i,
+      })
+    } else {
+      inGap = true
+    }
+  }
+
+  return result
+}
+
+function DiffView({
+  diff,
+  params,
+}: {
+  diff: DiffLine[]
+  params: Record<string, unknown> | null
+}) {
+  const isLong = diff.length > 20
+  const [userExpanded, setUserExpanded] = useState<boolean | null>(null)
+  const isExpanded = userExpanded !== null ? userExpanded : !isLong
+
+  const filename = getDiffFilename(params)
+  const addCount = diff.filter((d) => d.type === "add").length
+  const delCount = diff.filter((d) => d.type === "del").length
+
+  const hunkLines = extractHunks(diff, 3)
+  const MAX_DISPLAY_LINES = 200
+  const displayedLines = hunkLines.slice(0, MAX_DISPLAY_LINES)
+  const remainingCount = hunkLines.length - displayedLines.length
+
+  return (
+    <div className="space-y-1.5 min-w-0 max-w-full">
+      <div className="flex items-center justify-between gap-2 min-w-0">
+        <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/50 font-semibold select-none min-w-0">
+          <span className="truncate">Diff — {filename}</span>
+          {addCount > 0 && <span className="text-emerald-400 font-normal">+{addCount}</span>}
+          {delCount > 0 && <span className="text-red-400 font-normal">-{delCount}</span>}
+        </div>
+        {isLong && (
+          <button
+            type="button"
+            onClick={() => setUserExpanded(!isExpanded)}
+            className="text-[10px] font-mono text-muted-foreground/60 hover:text-foreground cursor-pointer transition-colors px-1.5 py-0.5 rounded bg-muted/30 hover:bg-muted/60 shrink-0 select-none flex items-center gap-1"
+          >
+            {isExpanded ? (
+              <>
+                <ChevronDown className="w-3 h-3 shrink-0" />
+                <span>Hide diff</span>
+              </>
+            ) : (
+              <>
+                <ChevronRight className="w-3 h-3 shrink-0" />
+                <span>Show diff ({diff.length} lines)</span>
+              </>
+            )}
+          </button>
+        )}
+      </div>
+
+      {isExpanded && (
+        <div className="rounded border border-border/40 bg-background/50 overflow-hidden min-w-0 max-w-full">
+          <div className="max-h-80 overflow-y-auto overflow-x-auto min-w-0 max-w-full font-mono text-[11px]">
+            {displayedLines.map((line) => {
+              if (line.isDivider) {
+                return (
+                  <div
+                    key={line.key}
+                    className="px-2.5 py-0.5 text-[10px] font-mono text-muted-foreground/30 bg-muted/10 select-none tracking-widest text-center"
+                  >
+                    ···
+                  </div>
+                )
+              }
+
+              const isAdd = line.type === "add"
+              const isDel = line.type === "del"
+              const isCtx = line.type === "ctx"
+
+              return (
+                <div
+                  key={line.key}
+                  className={cn(
+                    "px-2.5 py-0.5 flex items-start min-w-fit leading-relaxed select-text",
+                    isAdd && "bg-emerald-950/20 text-emerald-400",
+                    isDel && "bg-red-950/20 text-red-400",
+                    isCtx && "text-muted-foreground/40"
+                  )}
+                >
+                  <span className="select-none shrink-0 w-3.5 mr-1 text-center font-mono font-semibold">
+                    {isAdd ? "+" : isDel ? "-" : " "}
+                  </span>
+                  <span className="whitespace-pre font-mono flex-1">{line.text || " "}</span>
+                </div>
+              )
+            })}
+          </div>
+          {remainingCount > 0 && (
+            <div className="px-2.5 py-1 text-[10px] font-mono text-muted-foreground/40 italic bg-muted/10 border-t border-border/20 select-none">
+              … {remainingCount} more lines
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function renderMd(text: string): string {
   let h = text
     .replace(/&/g, "&amp;")
@@ -248,7 +416,10 @@ export function StepRow({ step }: { step: Step }) {
   if (isTool) {
     const ToolIcon = getToolIcon(step.tool)
     const summary = getToolSummary(step.tool, step.params)
-    const hasParams = step.params && Object.keys(step.params).length > 0
+    const hasParams = !!step.params && Object.keys(step.params).length > 0
+    const hasDiff = Array.isArray(step.diff) && step.diff.length > 0
+    const hasOutput = !!step.output
+    const hasError = !!step.error
 
     return (
       <div className="px-4 py-0.5 min-w-0 max-w-full">
@@ -295,7 +466,8 @@ export function StepRow({ step }: { step: Step }) {
           {expanded && (
             <div className="border-t border-border/40 bg-muted/20 px-3 py-2.5 space-y-2.5 text-xs min-w-0 max-w-full overflow-hidden">
               {hasParams && <ExpandedParams params={step.params} />}
-              {step.output && (
+              {hasDiff && <DiffView diff={step.diff!} params={step.params} />}
+              {hasOutput && (
                 <div className="space-y-1 min-w-0 max-w-full">
                   <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/40 font-semibold select-none">
                     Output
@@ -305,7 +477,7 @@ export function StepRow({ step }: { step: Step }) {
                   </pre>
                 </div>
               )}
-              {step.error && (
+              {hasError && (
                 <div className="space-y-1 min-w-0 max-w-full">
                   <div className="text-[10px] font-mono uppercase tracking-wider text-red-400/60 font-semibold select-none">
                     Error
@@ -315,7 +487,7 @@ export function StepRow({ step }: { step: Step }) {
                   </pre>
                 </div>
               )}
-              {!hasParams && !step.output && !step.error && (
+              {!hasParams && !hasDiff && !hasOutput && !hasError && (
                 <div className="text-[11px] font-mono text-muted-foreground/40 italic">
                   No additional parameters or output
                 </div>

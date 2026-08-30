@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react"
-import type { AgyEvent, Run, Step } from "../types"
+import type { AgyEvent, Run, Step, DiffLine } from "../types"
 
 function makeRun(file: string): Run {
   return { file, convId: null, cwd: null, toolCount: 0, perm: null, status: "running", start: Date.now(), steps: new Map(), result: null }
@@ -42,6 +42,19 @@ export function useAgySSE(url = "/events") {
     es.onmessage = (ev) => {
       const msg = JSON.parse(ev.data)
       if (msg.type === "ready") return
+      // tool_diff event (from server-side file snapshot diffing)
+      if (msg.file && msg.tool_diff) {
+        setRuns(prev => {
+          const next = new Map(prev)
+          const run = next.get(msg.file)
+          if (run) {
+            const st = run.steps.get(msg.tool_diff.step_index)
+            if (st) st.diff = msg.tool_diff.diff as DiffLine[]
+          }
+          return next
+        })
+        return
+      }
       if (msg.file && msg.lines) {
         setRuns(prev => {
           const next = new Map(prev)
