@@ -494,7 +494,7 @@ export function StepRow({ step }: { step: Step }) {
                   <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/40 font-semibold select-none">
                     Output
                   </div>
-                  <pre className="font-mono text-[11px] text-emerald-400/90 bg-emerald-950/20 border border-emerald-900/30 rounded px-2.5 py-1.5 max-h-48 overflow-y-auto overflow-x-auto whitespace-pre-wrap break-all min-w-0 max-w-full">
+                  <pre className="font-mono text-[11px] text-foreground/85 bg-background/50 border border-border/40 rounded px-2.5 py-1.5 max-h-48 overflow-y-auto overflow-x-auto whitespace-pre-wrap break-all min-w-0 max-w-full">
                     {step.output}
                   </pre>
                 </div>
