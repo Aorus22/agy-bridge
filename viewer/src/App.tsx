@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react"
 import { Menu } from "lucide-react"
-import { Sheet, SheetContent, SheetHeader } from "./components/ui/sheet"
+import { Sheet, SheetContent } from "./components/ui/sheet"
 import { Sidebar } from "./components/Sidebar"
 import { Transcript } from "./components/Transcript"
 import { useAgySSE } from "./hooks/useAgySSE"
-import { shortPath } from "./lib/utils"
 import type { Run } from "./types"
 
 export default function App() {
@@ -13,18 +12,23 @@ export default function App() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [, setTick] = useState(0)
 
-  // live timer for running sessions
+  // Live timer for running sessions
   useEffect(() => {
     let active = false
-    for (const r of runs.values()) if (r.status === "running") { active = true; break }
+    for (const r of runs.values()) {
+      if (r.status === "running") {
+        active = true
+        break
+      }
+    }
     if (!active) return
-    const iv = setInterval(() => setTick(t => t + 1), 1000)
+    const iv = setInterval(() => setTick((t) => t + 1), 1000)
     return () => clearInterval(iv)
   }, [runs])
 
-  // auto-select most recent running session
+  // Auto-select most recent session
   useEffect(() => {
-    if (selectedFile) return
+    if (selectedFile && runs.has(selectedFile)) return
     let latest: Run | null = null
     for (const r of runs.values()) {
       if (!latest || r.start > latest.start) latest = r
@@ -35,18 +39,25 @@ export default function App() {
   const selectedRun = selectedFile ? runs.get(selectedFile) ?? null : null
 
   const sidebarContent = (
-    <>
-      <div className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground/40 border-b border-border">
+    <div className="flex flex-col h-full overflow-hidden bg-card">
+      <div className="px-3.5 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 border-b border-border shrink-0 select-none">
         Sessions
       </div>
       <div className="flex-1 min-h-0">
-        <Sidebar runs={runs} selectedFile={selectedFile} onSelect={(f) => { setSelectedFile(f); setMobileOpen(false) }} />
+        <Sidebar
+          runs={runs}
+          selectedFile={selectedFile}
+          onSelect={(f) => {
+            setSelectedFile(f)
+            setMobileOpen(false)
+          }}
+        />
       </div>
-    </>
+    </div>
   )
 
   return (
-    <div className="h-screen flex overflow-hidden">
+    <div className="h-screen flex overflow-hidden bg-background text-foreground">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-[240px] min-w-[240px] flex-col bg-card border-r border-border">
         {sidebarContent}
@@ -54,20 +65,23 @@ export default function App() {
 
       {/* Mobile Sheet */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="flex flex-col p-0">
-          <SheetHeader>Sessions</SheetHeader>
+        <SheetContent side="left" className="flex flex-col p-0 w-[280px]">
           {sidebarContent}
         </SheetContent>
       </Sheet>
 
       {/* Main */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Mobile bar */}
-        <div className="md:hidden flex items-center gap-3 px-3 py-2 border-b border-border">
-          <button onClick={() => setMobileOpen(true)} className="p-1 rounded hover:bg-muted text-muted-foreground">
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Mobile top bar */}
+        <div className="md:hidden flex items-center gap-3 px-3 py-2 border-b border-border bg-card">
+          <button
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open sessions menu"
+            className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+          >
             <Menu className="w-4 h-4" />
           </button>
-          <span className="font-mono text-xs text-muted-foreground">
+          <span className="font-mono text-xs text-foreground/80 truncate">
             {selectedRun?.convId ? selectedRun.convId.slice(0, 12) : "agy"}
           </span>
         </div>
