@@ -80,7 +80,7 @@ export function Transcript({ run }: { run: Run | null }) {
           {run.promptText && (
             <div className="px-4 py-2 mb-1 animate-fade-in">
               <div className="text-xs text-muted-foreground/40 mb-1">prompt</div>
-              <div className="text-sm text-foreground/80 whitespace-pre-wrap break-words leading-relaxed">{run.promptText}</div>
+              <div className="text-sm text-foreground/80 break-words leading-relaxed" dangerouslySetInnerHTML={{ __html: renderMd(run.promptText) }} />
             </div>
           )}
           {steps.length === 0 && (
