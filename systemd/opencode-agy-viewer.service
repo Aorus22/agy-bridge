@@ -1,0 +1,17 @@
+[Unit]
+Description=OpenCode-Agy live viewer (bun; port  3939)
+After=network.target
+
+[Service]
+Type=simple
+User=aorus
+Group=aorus
+WorkingDirectory=/home/aorus/project/opencode-agy
+Environment=HOME=/home/aorus
+Environment=TMPDIR=/tmp
+ExecStart=/usr/local/bin/bun run /home/aorus/project/opencode-agy/viewer/server.ts
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

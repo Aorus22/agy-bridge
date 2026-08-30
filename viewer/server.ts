@@ -56,8 +56,9 @@ const server = createServer((req, res) => {
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
-      Connection: "keep-alive",
+      "Connection": "keep-alive",
       "Access-Control-Allow-Origin": "*",
+      "X-Accel-Buffering": "no",
     })
 
     // Send current files (replay)

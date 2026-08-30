@@ -238,6 +238,7 @@ function tok(u) { if (!u) return ""; const p=[]; if(u.input_tokens)p.push("▲ <
 function params(p) { if (!p) return ""; return Object.entries(p).map(([k,v])=>{let val=typeof v==="string"?v:(v==null?"null":JSON.stringify(v)); if(val.length>120)val=val.slice(0,120)+"…"; return `<span class="k">${esc(k)}:</span> <span class="v">${esc(val)}</span>`}).join("  ·  "); }
 function md(t) { let h=esc(t); h=h.replace(/```(\w*)\n([\s\S]*?)```/g,(_,l,c)=>`<pre>${c.replace(/\n$/,"")}</pre>`); h=h.replace(/`([^`]+)`/g,"<code>$1</code>"); h=h.replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>"); h=h.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2">$1</a>'); return h; }
 
+function escAttr(s) { return (s||"").replace(/'/g, "\\'"); }
 function projName(r) { return r.cwd || "unknown"; }
 function relTime(r) { if (r.result && r.result.duration_seconds!=null) return dur(r.result.duration_seconds); if (r.status==="running") return Math.round((Date.now()-r.start)/1000)+"s"; return ""; }
 
@@ -255,13 +256,13 @@ function renderSidebar() {
     const collapsed = collapsedProjects.has(proj);
     const name = proj.split("/").pop() || proj;
     html += `<div class="project-group">`;
-    html += `<div class="project-header" onclick="toggleProject(${JSON.stringify(proj).replace(/"/g,""")})"><span class="chevron">${collapsed?"▶":"▼"}</span><span class="project-name" title="${esc(proj)}">${esc(name)}</span><span class="project-count">${rs.length}</span></div>`;
+    html += `<div class="project-header" onclick="toggleProject('${escAttr(proj)}')"><span class="chevron">${collapsed?"▶":"▼"}</span><span class="project-name" title="${esc(proj)}">${esc(name)}</span><span class="project-count">${rs.length}</span></div>`;
     if (!collapsed) {
       rs.sort((a,b)=>b.start-a.start);
       for (const r of rs) {
         const active = r.file === selectedFile;
         const ico = r.status==="done"?'<span style="color:var(--green)">✓</span>':r.status==="error"?'<span style="color:var(--red)">✗</span>':'<span class="pulse-dot"></span>';
-        html += `<div class="session-item ${active?"active":""}" onclick="selectRun(${JSON.stringify(r.file).replace(/"/g,""")})"><span class="session-status">${ico}</span><span class="session-id">${esc(r.convId?r.convId.slice(0,8):r.file.split("/").pop())}</span><span class="session-time">${relTime(r)}</span></div>`;
+        html += `<div class="session-item ${active?"active":""}" onclick="selectRun('${escAttr(r.file)}')"><span class="session-status">${ico}</span><span class="session-id">${esc(r.convId?r.convId.slice(0,8):r.file.split("/").pop())}</span><span class="session-time">${relTime(r)}</span></div>`;
       }
     }
     html += `</div>`;
