@@ -1,0 +1,11 @@
+{
+  "name": "agy-panel",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    "./tui": "./src/tui.tsx"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": "*"
+  }
+}
