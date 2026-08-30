@@ -97,6 +97,18 @@
   }
 }
 
+/* Tool call card entrance: slide from left + fade */
+@keyframes toolEntrance {
+  0% {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 /* Slide up entrance for footer and panels */
 @keyframes slideUpEntrance {
   0% {
@@ -214,6 +226,10 @@
 /* ── Animation Utility Classes ── */
 .animate-step-in {
   animation: stepEntrance 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-tool-in {
+  animation: toolEntrance 200ms ease-out both;
 }
 
 .animate-slide-up {

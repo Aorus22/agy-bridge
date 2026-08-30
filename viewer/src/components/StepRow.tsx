@@ -418,7 +418,7 @@ export function StepRow({ step }: { step: Step }) {
   if (isThinking) {
     return (
       <div className="px-4 py-1 flex items-center gap-2 text-xs text-muted-foreground/50 min-w-0 overflow-hidden animate-step-in">
-        <Brain className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0 agy-pulse" />
+        <Brain className={cn("w-3.5 h-3.5 text-muted-foreground/40 shrink-0", isActive && "agy-pulse")} />
         <span className="shrink-0">thinking</span>
         {step.thinking > 0 && (
           <span className="font-mono text-[11px] text-muted-foreground/40 truncate min-w-0">
@@ -444,7 +444,7 @@ export function StepRow({ step }: { step: Step }) {
     const hasError = !!step.error
 
     return (
-      <div className="px-4 py-0.5 min-w-0 max-w-full animate-step-in">
+      <div className="px-4 py-0.5 min-w-0 max-w-full animate-tool-in">
         <div
           className={cn(
             "rounded-md border border-border/50 bg-card/40 hover:bg-card/70 hover:border-border/75 transition-all duration-150 overflow-hidden min-w-0 max-w-full group",
