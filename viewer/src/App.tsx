@@ -8,7 +8,9 @@ import type { Run } from "./types"
 
 export default function App() {
   const runs = useAgySSE()
-  const [selectedFile, setSelectedFile] = useState<string | null>(null)
+  const [selectedFile, setSelectedFile] = useState<string | null>(() => {
+    try { return localStorage.getItem("agy-bridge:selected") } catch { return null }
+  })
   const [mobileOpen, setMobileOpen] = useState(false)
   const [, setTick] = useState(0)
 
@@ -54,6 +56,7 @@ export default function App() {
           selectedFile={selectedFile}
           onSelect={(f) => {
             setSelectedFile(f)
+            try { localStorage.setItem("agy-bridge:selected", f) } catch {}
             setMobileOpen(false)
           }}
         />

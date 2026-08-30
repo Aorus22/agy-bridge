@@ -58,17 +58,16 @@ export function Transcript({ run }: { run: Run | null }) {
         </div>
       </div>
 
-      {/* Prompt */}
-      {run.promptText && (
-        <div className="px-4 py-2 border-b border-border/50">
-          <div className="text-xs text-muted-foreground/40 mb-1">prompt</div>
-          <div className="text-sm text-foreground/80 whitespace-pre-wrap break-words">{run.promptText}</div>
-        </div>
-      )}
-
       {/* Steps */}
       <ScrollArea className="flex-1 min-w-0 max-w-full">
         <div className="py-2.5 space-y-1 min-w-0 max-w-full overflow-hidden">
+          {/* Prompt — inside scroll area, scrolls with content */}
+          {run.promptText && (
+            <div className="px-4 py-2 mb-1 animate-fade-in">
+              <div className="text-xs text-muted-foreground/40 mb-1">prompt</div>
+              <div className="text-sm text-foreground/80 whitespace-pre-wrap break-words leading-relaxed">{run.promptText}</div>
+            </div>
+          )}
           {steps.length === 0 && (
             <div className="flex items-center justify-center h-32 text-muted-foreground/40 text-xs animate-fade-in gap-2">
               <span className="w-2 h-2 rounded-full bg-blue-400 agy-pulse" />
