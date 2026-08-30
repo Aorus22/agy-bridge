@@ -1,5 +1,5 @@
 /**
- * agy-bridge live viewer server.
+ * agy-bridge live viewer.
  *
  * Serves the built Vite app + an SSE endpoint that watches ~/.agy-bridge/agy-*.jsonl
  * tee files and streams their content live.
@@ -11,12 +11,13 @@
  *
  * Run: bun run viewer/server.ts  (default port 3939)
  */
-import { readdirSync, readFileSync, statSync } from "node:fs"
-import { join } from "node:path"
+import { readdirSync, readFileSync, statSync, watch } from "node:fs"
+import { execSync } from "node:child_process"
+import { join, dirname } from "node:path"
 import { homedir } from "node:os"
 import { createServer } from "node:http"
 import { fileURLToPath } from "node:url"
-import { dirname, join as pjoin } from "node:path"
+import { dirname as pdirname, join as pjoin } from "node:path"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const TEE_DIR = process.env.AGY_TEE_DIR || join(homedir(), ".agy-bridge")
@@ -56,15 +57,62 @@ function lineDiff(before: string, after: string): DiffLine[] {
   return result
 }
 
-// ── pending file snapshots for diff capture ─────────────────────────────
-// key: `${teeFile}:${stepIndex}` → { targetPath: string, before: string }
-const pendingSnapshots = new Map<string, { targetPath: string; before: string }>()
+// ── git diff capture for file-modifying tools ─────────────────────────────
 
-function tryReadFile(path: string): string | null {
-  try { return readFileSync(path, "utf8") } catch { return null }
+function parseGitDiff(output: string): DiffLine[] {
+  const lines = output.split("\n")
+  const result: DiffLine[] = []
+  let inHunk = false
+  for (const line of lines) {
+    if (line.startsWith("@@")) { inHunk = true; continue }
+    if (line.startsWith("diff ") || line.startsWith("index ")) { inHunk = false; continue }
+    if (line.startsWith("---") || line.startsWith("+++")) { continue }
+    if (!inHunk) continue
+    if (line.startsWith("+")) result.push({ type: "add", text: line.slice(1) })
+    else if (line.startsWith("-")) result.push({ type: "del", text: line.slice(1) })
+    else if (line.startsWith(" ")) result.push({ type: "ctx", text: line.slice(1) })
+    else if (line.startsWith("\\") || line.length === 0) continue
+  }
+  return result
 }
 
-/** Parse a tee line, detect replace tool calls, capture diffs. Returns extra SSE messages. */
+function gitDiff(filePath: string): DiffLine[] | null {
+  try {
+    const dir = dirname(filePath)
+    // check if file is tracked by git
+    let output = ""
+    try {
+      output = execSync(`git diff HEAD --unified=3 -- "${filePath}"`, {
+        encoding: "utf8", timeout: 2000, cwd: dir, stdio: ["pipe", "pipe", "pipe"],
+      })
+    } catch { return null }
+
+    if (output.trim()) {
+      const diff = parseGitDiff(output)
+      return diff.length > 0 ? diff : null
+    }
+    // untracked or no changes vs HEAD — try untracked file as fully added
+    try {
+      execSync(`git ls-files --error-unmatch "${filePath}"`, {
+        encoding: "utf8", timeout: 2000, cwd: dir, stdio: ["pipe", "pipe", "pipe"],
+      })
+      // tracked but no diff (already committed?) — skip
+      return null
+    } catch {
+      // untracked file: show entire content as added
+      try {
+        const content = readFileSync(filePath, "utf8")
+        const lines = content.split("\n").filter((_, i, arr) => i < arr.length - 1 || arr[arr.length - 1] !== "")
+        if (lines.length > MAX_DIFF_LINES) return null
+        return lines.map((l) => ({ type: "add" as const, text: l }))
+      } catch { return null }
+    }
+  } catch {
+    return null
+  }
+}
+
+/** Parse a tee line, detect file-modifying tools, capture git diff on DONE. */
 function processLine(teeFile: string, rawLine: string): string[] {
   const extra: string[] = []
   let evt: any
@@ -75,38 +123,25 @@ function processLine(teeFile: string, rawLine: string): string[] {
   if (su.step_type !== "tool") return extra
 
   const toolName = (su.tool_name || su.tool_info?.name || "").toLowerCase()
-  if (!toolName.includes("replace")) return extra
+  if (!toolName.includes("replace") && !toolName.includes("write_to_file") && !toolName.includes("sed_file")) return extra
 
   const params = su.tool_info?.parameters || {}
   const targetPath =
     params.TargetFile || params.targetFile || params.file_path || params.filePath || params.file || ""
   if (!targetPath || typeof targetPath !== "string") return extra
 
-  const key = `${teeFile}:${su.step_index}`
-  const state = su.state
+  console.error(`[diff] ${toolName} ${su.state} → ${targetPath}`)
 
-  if (state === "ACTIVE") {
-    // snapshot before
-    const before = tryReadFile(targetPath)
-    pendingSnapshots.set(key, { targetPath, before: before ?? "" })
-  } else if (state === "DONE" || state === "ERROR") {
-    // snapshot after, diff
-    const pending = pendingSnapshots.get(key)
-    if (pending) {
-      pendingSnapshots.delete(key)
-      const after = tryReadFile(pending.targetPath) ?? ""
-      const beforeLines = pending.before.split("\n").length
-      const afterLines = after.split("\n").length
-      if (beforeLines <= MAX_DIFF_LINES && afterLines <= MAX_DIFF_LINES) {
-        const diff = lineDiff(pending.before, after)
-        if (diff.some((d) => d.type !== "ctx")) {
-          extra.push(JSON.stringify({
-            file: teeFile,
-            tool_diff: { step_index: su.step_index, target: targetPath, diff },
-          }))
-        }
-      }
-    }
+  // Only capture diff on DONE (file has been modified)
+  if (su.state !== "DONE" && su.state !== "ERROR") return extra
+
+  const diff = gitDiff(targetPath)
+  console.error(`[diff] gitDiff result: ${diff ? diff.length + " lines" : "null"}`)
+  if (diff && diff.length > 0) {
+    extra.push(JSON.stringify({
+      file: teeFile,
+      tool_diff: { step_index: su.step_index, target: targetPath, diff },
+    }))
   }
   return extra
 }
@@ -134,8 +169,10 @@ function readNewLines(path: string): { lines: string[]; extras: string[] } {
     const chunk = buf.subarray(offset).toString("utf8")
     offsets.set(path, size)
     const lines = chunk.split("\n").filter((l) => l.trim().length > 0)
+    console.error(`[tee] ${path}: ${lines.length} new lines (offset ${offset} → ${size})`)
     const extras: string[] = []
     for (const line of lines) extras.push(...processLine(path, line))
+    if (extras.length > 0) console.error(`[tee] ${extras.length} extras generated`)
     return { lines, extras }
   } catch {
     return { lines: [], extras: [] }
@@ -162,20 +199,31 @@ const server = createServer((req, res) => {
     }
     res.write(`data: ${JSON.stringify({ type: "ready" })}\n\n`)
 
-    // Poll for new lines every 400ms
-    const interval = setInterval(() => {
+    // Watch tee dir for changes (real-time, not polling)
+    const sendNew = () => {
       for (const file of scanTeeFiles()) {
         const { lines, extras } = readNewLines(file)
         if (lines.length > 0) res.write(`data: ${JSON.stringify({ file, lines })}\n\n`)
         for (const ex of extras) res.write(`data: ${ex}\n\n`)
       }
-    }, 400)
+    }
+
+    // fs.watch for real-time detection (key for diff capture)
+    let watchTimer: NodeJS.Timeout | null = null
+    const watcher = watch(TEE_DIR, () => {
+      // debounce: batch rapid writes into one read
+      if (watchTimer) clearTimeout(watchTimer)
+      watchTimer = setTimeout(sendNew, 20)
+    })
+
+    // Fallback poll (catches missed events)
+    const interval = setInterval(sendNew, 500)
 
     const keepalive = setInterval(() => {
       try { res.write(": keepalive\n\n") } catch { clearInterval(interval); clearInterval(keepalive) }
     }, 15000)
 
-    req.on("close", () => { clearInterval(interval); clearInterval(keepalive) })
+    req.on("close", () => { clearInterval(interval); clearInterval(keepalive); watcher.close() })
     return
   }
 
