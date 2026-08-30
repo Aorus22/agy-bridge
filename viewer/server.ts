@@ -10,13 +10,13 @@
  */
 import { watchFile, readdirSync, readFileSync, statSync, existsSync } from "node:fs"
 import { join } from "node:path"
-import { tmpdir } from "node:os"
+import { homedir, tmpdir } from "node:os"
 import { createServer } from "node:http"
 import { fileURLToPath } from "node:url"
 import { dirname, join as pjoin } from "node:path"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const TEE_DIR = process.env.AGY_TEE_DIR || tmpdir()
+const TEE_DIR = process.env.AGY_TEE_DIR || join(homedir(), ".agy-bridge")
 const PORT = (() => {
   const i = process.argv.indexOf("--port")
   return i > -1 ? parseInt(process.argv[i + 1], 10) : 3939

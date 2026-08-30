@@ -111,7 +111,7 @@ export function buildAgyArgs(args: AgyCallArgs): string[] {
     "--output-format",
     "stream-json",
     "--log-file",
-    path.join(os.tmpdir(), `agy-${Date.now().toString(36)}.log`),
+    path.join(os.homedir(), ".agy-bridge", `agy-${Date.now().toString(36)}.log`),
   ]
   if (effectiveAutoApprove) agyArgs.push("--dangerously-skip-permissions")
   if (effectiveSandbox) agyArgs.push("--sandbox")
@@ -143,7 +143,7 @@ export function runAgy(
 ): Promise<AgyResult> {
   const sessionId = opts.sessionId || "core"
   const teePath =
-    args.tee_file || path.join(os.tmpdir(), `agy-${sessionId.slice(0, 8)}.jsonl`)
+    args.tee_file || path.join(os.homedir(), ".agy-bridge", `agy-${sessionId.slice(0, 8)}.jsonl`)
 
   const tee = (line: string) => {
     try {

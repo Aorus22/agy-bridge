@@ -1,4 +1,4 @@
-# opencode-agy
+# agy-bridge
 
 Delegate tasks to [Antigravity](https://github.com/google-gemini/antigravity) (`agy` / Gemini) as a **blocking one-shot** — no polling, the full result is returned when done.
 
@@ -51,7 +51,7 @@ Then enable the `agy` tool for an agent (see [opencode.example.jsonc](opencode.e
   "mcp": {
     "agy": {
       "type": "local",
-      "command": ["bun", "run", "/path/to/opencode-agy/mcp/server.ts"],
+      "command": ["bun", "run", "/path/to/agy-bridge/mcp/server.ts"],
       "enabled": true
     }
   }
@@ -65,7 +65,7 @@ For Claude Desktop / Cursor, add to their MCP config:
   "mcpServers": {
     "agy": {
       "command": "bun",
-      "args": ["run", "/path/to/opencode-agy/mcp/server.ts"]
+      "args": ["run", "/path/to/agy-bridge/mcp/server.ts"]
     }
   }
 }
@@ -94,7 +94,7 @@ The LLM calls the `agy` tool. Arguments:
 | `conversation_id` | string | — | Resume a prior agy conversation. |
 | `write_to_file` | string | — | Also write the final response to this path. |
 | `extract` | `"last_code_block"` | — | Extract the last fenced code block. |
-| `tee_file` | string | `/tmp/agy-<sid>.jsonl` | Tee raw stream-json for `tail -f`. |
+| `tee_file` | string | `~/.agy-bridge/agy-<sid>.jsonl` | Tee raw stream-json for `tail -f`. |
 
 ### Environment variables
 
@@ -109,10 +109,10 @@ The LLM calls the `agy` tool. Arguments:
 
 ```bash
 # raw stream-json (one JSON object per line)
-tail -f /tmp/agy-stream.jsonl
+tail -f ~/.agy-bridge/agy-stream.jsonl
 
 # just the streaming text deltas
-tail -f /tmp/agy-stream.jsonl | jq -r 'select(.event=="step_update").step_update.text_delta // empty'
+tail -f ~/.agy-bridge/agy-stream.jsonl | jq -r 'select(.event=="step_update").step_update.text_delta // empty'
 ```
 
 ## View a run (agy_view)
@@ -120,7 +120,7 @@ tail -f /tmp/agy-stream.jsonl | jq -r 'select(.event=="step_update").step_update
 After an `agy` call finishes, replay its full process as a subagent-style transcript with the `agy_view` tool — pass the same `tee_file` path:
 
 ```
-agy_view(tee_file: "/tmp/agy-stream.jsonl")
+agy_view(tee_file: "~/.agy-bridge/agy-stream.jsonl")
 ```
 
 Renders a transcript like:

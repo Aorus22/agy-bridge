@@ -130,7 +130,7 @@ export default tool({
     tee_file: tool.schema
       .string()
       .optional()
-      .describe("Absolute path to tee agy's raw stream-json output line-by-line (one JSON object per line) so you can `tail -f` it in another terminal to watch the full process live. Defaults to /tmp/agy-<sessionId>.jsonl."),
+      .describe("Absolute path to tee agy's raw stream-json output line-by-line (one JSON object per line) so you can `tail -f` it in another terminal to watch the full process live. Defaults to ~/.agy-bridge/agy-<sessionId>.jsonl."),
   },
   async execute(args, context) {
     const effectiveAutoApprove = args.auto_approve == null ? DEFAULT_AUTO_APPROVE : !!args.auto_approve
@@ -142,7 +142,7 @@ export default tool({
     // Tee raw stream-json line-by-line to a file so the user can `tail -f` it
     // live in another terminal to watch the full process (every init/step/result
     // event), not just the 1-line title tail in the TUI.
-    const teePath = args.tee_file || path.join(os.tmpdir(), `agy-${context.sessionID.slice(0, 8)}.jsonl`)
+    const teePath = args.tee_file || path.join(os.homedir(), ".agy-bridge", `agy-${context.sessionID.slice(0, 8)}.jsonl`)
     const tee = (line: string) => {
       try {
         appendFileSync(teePath, line + "\n")
@@ -162,7 +162,7 @@ export default tool({
       "--output-format",
       "stream-json",
       "--log-file",
-      path.join(os.tmpdir(), `agy-${context.sessionID.slice(0, 8)}.log`),
+      path.join(os.homedir(), ".agy-bridge", `agy-${context.sessionID.slice(0, 8)}.log`),
     ]
     if (effectiveAutoApprove) agyArgs.push("--dangerously-skip-permissions")
     if (effectiveSandbox) agyArgs.push("--sandbox")
