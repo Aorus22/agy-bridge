@@ -38,8 +38,7 @@ This project replaces that with a **single blocking call**: the caller invokes t
 
 ```bash
 mkdir -p ~/.config/opencode/tools
-cp tools/agy.ts ~/.config/opencode/tools/
-cp -r src ~/.config/opencode/tools/../  # or keep src/ next to tools/
+cp tools/agy.ts tools/agy_view.ts ~/.config/opencode/tools/
 ```
 
 Then enable the `agy` tool for an agent (see [opencode.example.jsonc](opencode.example.jsonc)).
@@ -114,6 +113,42 @@ tail -f /tmp/agy-stream.jsonl
 
 # just the streaming text deltas
 tail -f /tmp/agy-stream.jsonl | jq -r 'select(.event=="step_update").step_update.text_delta // empty'
+```
+
+## View a run (agy_view)
+
+After an `agy` call finishes, replay its full process as a subagent-style transcript with the `agy_view` tool — pass the same `tee_file` path:
+
+```
+agy_view(tee_file: "/tmp/agy-stream.jsonl")
+```
+
+Renders a transcript like:
+
+```
+╭─ agy (Gemini) ─────────────────────────────────────────
+│ conversation: ae22023c-7243-47f0-8ea0-cf63bd2e83ef
+│ workspace:   /tmp
+│ tools:       57 available (ask_custom_permission, …)
+│ permission:  always-proceed
+╰─────────────────────────────────────────────────────────
+
+◇ step 2 · agent_response                          1.8s
+  VIEW_TEST_42
+  ▲ 13,873 in   ▼ 69 out   ✦ 63 thinking   = 13,942 total
+
+✓ result · SUCCESS                      1.9s · 1 turn
+
+──── final response ──────────────────────────────────────
+VIEW_TEST_42
+```
+
+If the run is still in progress (no `result` event yet), it renders the partial transcript and notes `⋯ still running`. Pass `raw: true` to get the raw stream-json lines instead.
+
+Install alongside `agy`:
+
+```bash
+cp tools/agy_view.ts ~/.config/opencode/tools/
 ```
 
 ## How it works
