@@ -9,6 +9,7 @@ export interface AgyUsage {
 export interface AgyEvent {
   event?: string
   conversation_id?: string
+  text?: string
   init?: { cwd?: string; tools?: string[]; permission_mode?: string }
   step_update?: {
     conversation_id?: string
@@ -67,4 +68,5 @@ export interface Run {
   start: number
   steps: Map<number, Step>
   result: AgyEvent["result"] | null
+  promptText: string | null
 }

@@ -58,6 +58,14 @@ export function Transcript({ run }: { run: Run | null }) {
         </div>
       </div>
 
+      {/* Prompt */}
+      {run.promptText && (
+        <div className="px-4 py-2 border-b border-border/50">
+          <div className="text-xs text-muted-foreground/40 mb-1">prompt</div>
+          <div className="text-sm text-foreground/80 whitespace-pre-wrap break-words">{run.promptText}</div>
+        </div>
+      )}
+
       {/* Steps */}
       <ScrollArea className="flex-1 min-w-0 max-w-full">
         <div className="py-2.5 space-y-1 min-w-0 max-w-full overflow-hidden">

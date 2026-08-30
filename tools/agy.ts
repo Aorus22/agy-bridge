@@ -156,6 +156,11 @@ export default tool({
       /* ignore */
     }
 
+    // Write prompt as first event so the viewer can display it
+    try {
+      appendFileSync(teePath, JSON.stringify({ event: "prompt", text: args.prompt }) + "\n")
+    } catch {}
+
     const agyArgs: string[] = [
       "-p",
       fullPrompt,

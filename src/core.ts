@@ -158,6 +158,11 @@ export function runAgy(
     /* ignore */
   }
 
+  // Write prompt as first event so the viewer can display it
+  try {
+    appendFileSync(teePath, JSON.stringify({ event: "prompt", text: args.prompt }) + "\n")
+  } catch {}
+
   const agyArgs = buildAgyArgs(args)
   const proc: ChildProcess = spawn(AGY_BIN, agyArgs, { stdio: ["ignore", "pipe", "pipe"] })
 
