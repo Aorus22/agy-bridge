@@ -7,10 +7,10 @@ import type { Run } from "../types"
 
 function StatusIcon({ status }: { status: Run["status"] }) {
   if (status === "done") {
-    return <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+    return <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 animate-icon-pop" />
   }
   if (status === "error") {
-    return <X className="w-3.5 h-3.5 text-red-400 shrink-0" />
+    return <X className="w-3.5 h-3.5 text-red-400 shrink-0 animate-icon-pop" />
   }
   return <Loader2 className="w-3.5 h-3.5 text-blue-400 animate-spin shrink-0" />
 }
@@ -51,7 +51,7 @@ export function Sidebar({
 
   if (runs.size === 0) {
     return (
-      <div className="p-4 text-xs font-mono text-muted-foreground/40 text-center">
+      <div className="p-4 text-xs font-mono text-muted-foreground/40 text-center animate-fade-in">
         No sessions yet
       </div>
     )
@@ -59,22 +59,22 @@ export function Sidebar({
 
   return (
     <ScrollArea className="h-full w-full min-w-0">
-      <div className="py-1 px-1.5 space-y-1 min-w-0 max-w-full overflow-hidden">
+      <div className="py-1 px-1.5 space-y-1 min-w-0 max-w-full overflow-hidden animate-fade-in">
         {Array.from(groups.entries()).map(([proj, rs]) => {
           const isCollapsed = collapsed.has(proj)
           return (
             <Collapsible key={proj} open={!isCollapsed} onOpenChange={() => toggle(proj)} className="min-w-0 max-w-full">
-              <CollapsibleTrigger className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded select-none min-w-0 overflow-hidden">
+              <CollapsibleTrigger className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors duration-150 cursor-pointer rounded select-none min-w-0 overflow-hidden group">
                 <ChevronRight
                   className={cn(
-                    "w-3.5 h-3.5 text-muted-foreground/50 transition-transform duration-150 shrink-0",
+                    "w-3.5 h-3.5 text-muted-foreground/50 group-hover:text-muted-foreground transition-transform duration-200 ease-out shrink-0",
                     !isCollapsed && "rotate-90"
                   )}
                 />
                 <span className="flex-1 truncate text-left min-w-0" title={proj}>
                   {shortPath(proj)}
                 </span>
-                <span className="text-[10px] text-muted-foreground/40 font-mono tabular-nums shrink-0">
+                <span className="text-[10px] text-muted-foreground/40 font-mono tabular-nums shrink-0 group-hover:text-muted-foreground/60 transition-colors">
                   {rs.length}
                 </span>
               </CollapsibleTrigger>
@@ -89,17 +89,20 @@ export function Sidebar({
                         key={r.file}
                         onClick={() => onSelect(r.file)}
                         className={cn(
-                          "w-full flex items-center gap-2 pl-6 pr-2.5 py-1.5 text-xs rounded transition-colors text-left cursor-pointer min-w-0 overflow-hidden",
+                          "w-full flex items-center gap-2 pl-6 pr-2.5 py-1.5 text-xs rounded transition-all duration-150 text-left cursor-pointer min-w-0 overflow-hidden relative group/item",
                           isSelected
-                            ? "bg-accent text-accent-foreground font-medium"
-                            : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                            ? "bg-accent text-accent-foreground font-medium shadow-xs"
+                            : "text-muted-foreground hover:bg-muted/40 hover:text-foreground hover:translate-x-0.5 active:translate-x-0"
                         )}
                       >
+                        {isSelected && (
+                          <span className="absolute left-1.5 top-1.5 bottom-1.5 w-1 rounded-full bg-primary animate-fade-in" />
+                        )}
                         <StatusIcon status={r.status} />
                         <span className="font-mono text-[11px] flex-1 truncate min-w-0">
                           {r.convId ? r.convId.slice(0, 8) : shortPath(r.file)}
                         </span>
-                        <span className="font-mono text-[10px] text-muted-foreground/40 shrink-0 tabular-nums">
+                        <span className="font-mono text-[10px] text-muted-foreground/40 group-hover/item:text-muted-foreground/60 shrink-0 tabular-nums transition-colors">
                           {relTime(r)}
                         </span>
                       </button>

@@ -12,12 +12,12 @@ const SheetOverlay = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
-  <SheetPrimitive.Overlay className={cn("fixed inset-0 z-50 bg-black/60 backdrop-blur-sm", className)} {...props} ref={ref} />
+  <SheetPrimitive.Overlay className={cn("fixed inset-0 z-50 bg-black/60 backdrop-blur-xs", className)} {...props} ref={ref} />
 ))
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName
 
 const sheetVariants = cva(
-  "fixed z-50 gap-4 bg-card shadow-lg transition ease-in-out border-border",
+  "fixed z-50 gap-4 bg-card shadow-2xl border-border",
   {
     variants: {
       side: {

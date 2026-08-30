@@ -40,8 +40,13 @@ export default function App() {
 
   const sidebarContent = (
     <div className="flex flex-col h-full overflow-hidden bg-card">
-      <div className="px-3.5 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 border-b border-border shrink-0 select-none">
-        Sessions
+      <div className="px-3.5 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 border-b border-border shrink-0 select-none flex items-center justify-between">
+        <span>Sessions</span>
+        {runs.size > 0 && (
+          <span className="font-mono text-[10px] px-1.5 py-0.5 text-muted-foreground/50 bg-muted/40 rounded-full tabular-nums animate-fade-in">
+            {runs.size}
+          </span>
+        )}
       </div>
       <div className="flex-1 min-h-0">
         <Sidebar
@@ -59,7 +64,7 @@ export default function App() {
   return (
     <div className="h-screen flex overflow-hidden bg-background text-foreground">
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-[240px] min-w-[240px] flex-col bg-card border-r border-border">
+      <aside className="hidden md:flex w-[240px] min-w-[240px] flex-col bg-card border-r border-border transition-colors">
         {sidebarContent}
       </aside>
 
@@ -77,7 +82,7 @@ export default function App() {
           <button
             onClick={() => setMobileOpen(true)}
             aria-label="Open sessions menu"
-            className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground active:scale-95 transition-all duration-150 cursor-pointer"
           >
             <Menu className="w-4 h-4" />
           </button>
