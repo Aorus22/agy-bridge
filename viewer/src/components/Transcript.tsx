@@ -5,7 +5,7 @@ import { fmtDur, fmtTokens, shortPath } from "@/lib/utils"
 import type { Run } from "../types"
 
 function renderMd(text: string): string {
-  let h = text.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">")
+  let h = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
   h = h.replace(/```(\w*)\n([\s\S]*?)```/g, (_, __, c) => `<pre class="bg-muted/40 border border-border rounded-md p-2 overflow-x-auto max-w-full my-1.5 text-xs">${c.replace(/\n$/, "")}</pre>`)
   h = h.replace(/`([^`]+)`/g, '<code class="bg-muted px-1 py-0.5 rounded text-xs">$1</code>')
   h = h.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")

@@ -358,21 +358,43 @@ function renderMd(text: string): string {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
+  // code blocks
   h = h.replace(
     /```(\w*)\n([\s\S]*?)```/g,
     (_, __, code) =>
       `<pre class="bg-card border border-border rounded-md p-2.5 overflow-x-auto max-w-full my-2 text-xs font-mono text-foreground/90"><code>${code.replace(/\n$/, "")}</code></pre>`
   )
+  // inline code
   h = h.replace(
     /`([^`]+)`/g,
     '<code class="bg-muted px-1 py-0.5 rounded text-xs font-mono border border-border/40 text-foreground/90 break-all">$1</code>'
   )
+  // bold
   h = h.replace(/\*\*([^*]+)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>')
+  // italic
   h = h.replace(/(^|[^*])\*([^*]+)\*/g, '$1<em class="text-foreground/80">$2</em>')
+  // links
   h = h.replace(
     /\[([^\]]+)\]\(([^)]+)\)/g,
     '<a href="$2" target="_blank" rel="noreferrer" class="text-primary hover:underline break-all">$1</a>'
   )
+  // headers (###, ##, #)
+  h = h.replace(/^### (.+)$/gm, '<div class="text-sm font-semibold text-foreground mt-2 mb-1">$1</div>')
+  h = h.replace(/^## (.+)$/gm, '<div class="text-base font-semibold text-foreground mt-2.5 mb-1">$1</div>')
+  h = h.replace(/^# (.+)$/gm, '<div class="text-lg font-semibold text-foreground mt-3 mb-1.5">$1</div>')
+  // list items (- and *)
+  h = h.replace(/^(?:- |\* )(.+)$/gm, '<div class="text-sm text-foreground/90 pl-4 relative before:content-[""] before:absolute before:left-1 before:top-2 before:w-1 before:h-1 before:rounded-full before:bg-muted-foreground/50">$1</div>')
+  // numbered list items (1. 2. etc)
+  h = h.replace(/^(\d+)\. (.+)$/gm, '<div class="text-sm text-foreground/90 pl-5"><span class="text-muted-foreground/60">$1.</span> $2</div>')
+  // blockquotes
+  h = h.replace(/^> (.+)$/gm, '<blockquote class="border-l-2 border-border pl-3 text-muted-foreground text-sm my-1">$1</blockquote>')
+  // horizontal rules
+  h = h.replace(/^---$/gm, '<hr class="border-border my-2"/>')
+  // line breaks (but not inside pre/code)
+  h = h.replace(/\n/g, "<br/>")
+  // clean up extra brs around block elements
+  h = h.replace(/<br\/>(<div|<blockquote|<hr|<pre)/g, "$1")
+  h = h.replace(/(<\/div>|<\/blockquote>|<\/pre>|<hr\/>)<br\/>/g, "$1")
   return h
 }
 
