@@ -23,8 +23,10 @@ import (
 //go:embed all:dist
 var distFS embed.FS
 
-// teeDir is where agy tee files live (~/.agy-bridge by default).
-var teeDir string
+// teeDirs are the directories where agy tee files live. By default this is
+// ~/.agy-bridge, but we also watch the opencode temp dir so custom tee_file
+// paths (e.g. ~/.config/opencode/... or temp dirs) are visible.
+var teeDirs []string
 
 // mime types for static assets served from the embedded FS.
 var mimeTypes = map[string]string{
@@ -45,19 +47,29 @@ var mimeTypes = map[string]string{
 
 func main() {
 	port := flag.Int("port", 3939, "listen port")
-	tee := flag.String("tee-dir", "", "tee file directory (default ~/.agy-bridge)")
+	tee := flag.String("tee-dir", "", "tee file directory (default ~/.agy-bridge), comma-separated for multiple")
 	flag.Parse()
 
 	home, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatalf("cannot resolve home dir: %v", err)
 	}
-	teeDir = *tee
-	if teeDir == "" {
-		teeDir = filepath.Join(home, ".agy-bridge")
+
+	if *tee != "" {
+		teeDirs = strings.Split(*tee, string(filepath.ListSeparator))
+	} else {
+		teeDirs = []string{filepath.Join(home, ".agy-bridge")}
 	}
-	if err := os.MkdirAll(teeDir, 0o755); err != nil {
-		log.Fatalf("cannot create tee dir %s: %v", teeDir, err)
+	// Always also watch the opencode temp dir, since the agy opencode tool
+	// may write tee files there via custom tee_file paths.
+	ocTemp := filepath.Join(os.TempDir(), "opencode")
+	for _, d := range teeDirs {
+		if err := os.MkdirAll(d, 0o755); err != nil {
+			log.Printf("warning: cannot create tee dir %s: %v", d, err)
+		}
+	}
+	if _, err := os.Stat(ocTemp); err == nil {
+		teeDirs = append(teeDirs, ocTemp)
 	}
 
 	mux := http.NewServeMux()
@@ -67,7 +79,9 @@ func main() {
 
 	addr := fmt.Sprintf("127.0.0.1:%d", *port)
 	log.Printf("agy-bridge viewer: http://%s", addr)
-	log.Printf("watching: %s/agy-*.jsonl", teeDir)
+	for _, d := range teeDirs {
+		log.Printf("watching: %s/agy-*.jsonl", d)
+	}
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatal(err)
 	}

@@ -37,18 +37,21 @@ type teeState struct {
 
 var tee = &teeState{offsets: make(map[string]int64)}
 
-// scanTeeFiles returns the current set of tee files, sorted for stable replay.
+// scanTeeFiles returns the current set of tee files across all watched
+// directories, sorted for stable replay.
 func scanTeeFiles() []string {
-	entries, err := os.ReadDir(teeDir)
-	if err != nil {
-		return nil
-	}
 	var files []string
-	for _, e := range entries {
-		if e.IsDir() || !teeNameRe.MatchString(e.Name()) {
+	for _, dir := range teeDirs {
+		entries, err := os.ReadDir(dir)
+		if err != nil {
 			continue
 		}
-		files = append(files, filepath.Join(teeDir, e.Name()))
+		for _, e := range entries {
+			if e.IsDir() || !teeNameRe.MatchString(e.Name()) {
+				continue
+			}
+			files = append(files, filepath.Join(dir, e.Name()))
+		}
 	}
 	sort.Strings(files)
 	return files
