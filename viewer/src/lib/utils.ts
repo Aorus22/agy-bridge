@@ -25,6 +25,6 @@ export function fmtTokens(u?: { input_tokens?: number; output_tokens?: number; t
 }
 
 export function shortPath(p: string): string {
-  const parts = p.split("/")
+  const parts = p.split(/[\\/]/)
   return parts[parts.length - 1] || p
 }

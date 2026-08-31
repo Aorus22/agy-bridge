@@ -12,10 +12,15 @@ function getSlugFromPath(): string {
   return p
 }
 
+function fileBaseName(filePath: string): string {
+  // Handle both forward slashes (Unix) and backslashes (Windows)
+  const parts = filePath.split(/[\\/]/)
+  return parts[parts.length - 1] || filePath
+}
+
 function getSessionSlug(run: Run): string {
   if (run.convId) return run.convId.slice(0, 8)
-  const base = run.file.split("/").pop() || run.file
-  return base.replace(/\.jsonl$/i, "")
+  return fileBaseName(run.file).replace(/\.jsonl$/i, "")
 }
 
 function findRunBySlug(runs: Map<string, Run>, slug: string): Run | null {
@@ -23,7 +28,7 @@ function findRunBySlug(runs: Map<string, Run>, slug: string): Run | null {
   const s = slug.toLowerCase()
   for (const r of runs.values()) {
     if (r.convId && r.convId.toLowerCase().startsWith(s)) return r
-    const fileSlug = (r.file.split("/").pop() || r.file).replace(/\.jsonl$/i, "").toLowerCase()
+    const fileSlug = fileBaseName(r.file).replace(/\.jsonl$/i, "").toLowerCase()
     if (fileSlug === s || fileSlug.startsWith(s)) return r
   }
   return null
