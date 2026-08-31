@@ -1,18 +1,18 @@
 import { useState } from "react"
-import { Check, X, Loader2, ChevronRight, Square } from "lucide-react"
+import { Check, X, Loader2, ChevronRight, Square, Folder } from "lucide-react"
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "./ui/collapsible"
 import { ScrollArea } from "./ui/scroll-area"
 import { cn, shortPath, fmtDur } from "@/lib/utils"
 import type { Run } from "../types"
 
-function StatusIcon({ status }: { status: Run["status"] }) {
+function StatusIndicator({ status }: { status: Run["status"] }) {
   if (status === "done") {
-    return <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 animate-icon-pop" />
+    return <Check className="w-3 h-3 text-emerald-400 shrink-0" />
   }
   if (status === "error") {
-    return <X className="w-3.5 h-3.5 text-red-400 shrink-0 animate-icon-pop" />
+    return <X className="w-3 h-3 text-rose-400 shrink-0" />
   }
-  return <Loader2 className="w-3.5 h-3.5 text-blue-400 animate-spin shrink-0" />
+  return <Loader2 className="w-3 h-3 text-sky-400 animate-spin shrink-0" />
 }
 
 function relTime(r: Run): string {
@@ -45,10 +45,10 @@ export function Sidebar({
 }) {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
 
-  // group by project (cwd)
+  // Group by project (cwd)
   const groups = new Map<string, Run[]>()
   for (const r of runs.values()) {
-    const p = r.cwd || "unknown"
+    const p = r.cwd || "default"
     if (!groups.has(p)) groups.set(p, [])
     groups.get(p)!.push(r)
   }
@@ -64,34 +64,36 @@ export function Sidebar({
 
   if (runs.size === 0) {
     return (
-      <div className="p-4 text-xs font-mono text-muted-foreground/40 text-center animate-fade-in">
-        No sessions yet
+      <div className="p-4 text-xs font-mono text-neutral-500 text-center animate-fade-in">
+        No active sessions
       </div>
     )
   }
 
   return (
     <ScrollArea className="h-full w-full min-w-0">
-      <div className="py-2 px-2 space-y-1.5 min-w-0 max-w-full overflow-hidden animate-fade-in">
+      <div className="p-2 space-y-2 min-w-0 max-w-full overflow-hidden animate-fade-in">
         {Array.from(groups.entries()).map(([proj, rs]) => {
           const isCollapsed = collapsed.has(proj)
           return (
             <Collapsible key={proj} open={!isCollapsed} onOpenChange={() => toggle(proj)} className="min-w-0 max-w-full">
-              <CollapsibleTrigger className="w-full flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-muted-foreground/70 hover:text-foreground hover:bg-white/[0.04] transition-all duration-150 cursor-pointer rounded-lg select-none min-w-0 overflow-hidden group">
+              <CollapsibleTrigger className="w-full flex items-center gap-1.5 px-2 py-1 text-xs text-neutral-400 hover:text-neutral-200 hover:bg-neutral-850/50 transition-colors cursor-pointer rounded select-none min-w-0 overflow-hidden group">
                 <ChevronRight
                   className={cn(
-                    "w-3.5 h-3.5 text-muted-foreground/50 group-hover:text-muted-foreground transition-transform duration-200 ease-out shrink-0",
+                    "w-3 h-3 text-neutral-500 group-hover:text-neutral-300 transition-transform duration-150 shrink-0",
                     !isCollapsed && "rotate-90"
                   )}
                 />
-                <span className="flex-1 truncate text-left min-w-0 font-medium" title={proj}>
+                <Folder className="w-3 h-3 text-neutral-500 shrink-0" />
+                <span className="flex-1 truncate text-left min-w-0 font-mono text-[11px]" title={proj}>
                   {shortPath(proj)}
                 </span>
-                <span className="text-[10px] text-muted-foreground/40 font-mono tabular-nums shrink-0 px-1.5 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.06] group-hover:text-muted-foreground/70 transition-colors">
+                <span className="text-[10px] text-neutral-500 font-mono tabular-nums shrink-0 px-1 py-0.2 rounded bg-neutral-900 border border-neutral-800">
                   {rs.length}
                 </span>
               </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-0.5 pt-1 min-w-0 max-w-full overflow-hidden">
+
+              <CollapsibleContent className="space-y-0.5 pt-0.5 pl-2 min-w-0 max-w-full overflow-hidden">
                 {rs
                   .slice()
                   .sort((a, b) => b.start - a.start)
@@ -110,17 +112,17 @@ export function Sidebar({
                           }
                         }}
                         className={cn(
-                          "w-full flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-lg transition-all duration-150 text-left cursor-pointer min-w-0 overflow-hidden group/item relative border",
+                          "w-full flex items-center gap-2 px-2 py-1 text-xs rounded transition-colors text-left cursor-pointer min-w-0 overflow-hidden group/item border",
                           isSelected
-                            ? "bg-white/[0.09] text-foreground font-medium border-white/[0.15] shadow-[0_2px_12px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.12)]"
-                            : "text-muted-foreground/80 border-transparent hover:bg-white/[0.045] hover:text-foreground hover:border-white/[0.08] hover:translate-x-0.5 active:translate-x-0"
+                            ? "bg-neutral-800/80 text-neutral-100 font-medium border-neutral-700/60"
+                            : "text-neutral-400 border-transparent hover:bg-neutral-850 hover:text-neutral-200 hover:border-neutral-800/40"
                         )}
                       >
-                        <StatusIcon status={r.status} />
+                        <StatusIndicator status={r.status} />
                         <span className="font-mono text-[11px] flex-1 truncate min-w-0">
                           {r.convId ? r.convId.slice(0, 8) : shortPath(r.file)}
                         </span>
-                        <span className="font-mono text-[10px] text-muted-foreground/40 group-hover/item:text-muted-foreground/60 shrink-0 tabular-nums transition-colors">
+                        <span className="font-mono text-[10px] text-neutral-500 group-hover/item:text-neutral-400 shrink-0 tabular-nums">
                           {relTime(r)}
                         </span>
                         {r.status === "running" && (
@@ -129,9 +131,9 @@ export function Sidebar({
                             title="Stop session"
                             aria-label="Stop session"
                             onClick={(e) => handleStop(e, r)}
-                            className="p-1 -mr-1 rounded-md hover:bg-red-500/20 text-muted-foreground/60 hover:text-red-400 active:scale-95 transition-all duration-150 cursor-pointer shrink-0"
+                            className="p-1 -mr-1 rounded text-neutral-500 hover:text-rose-400 hover:bg-rose-950/30 transition-colors cursor-pointer shrink-0"
                           >
-                            <Square className="w-3 h-3 fill-current" />
+                            <Square className="w-2.5 h-2.5 fill-current" />
                           </button>
                         )}
                       </div>

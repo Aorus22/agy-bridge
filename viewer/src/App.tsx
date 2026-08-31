@@ -13,7 +13,6 @@ function getSlugFromPath(): string {
 }
 
 function fileBaseName(filePath: string): string {
-  // Handle both forward slashes (Unix) and backslashes (Windows)
   const parts = filePath.split(/[\\/]/)
   return parts[parts.length - 1] || filePath
 }
@@ -76,7 +75,7 @@ export default function App() {
       }
     }
 
-    // If no route slug (path is /), auto-select most recent session without changing URL
+    // Auto-select most recent session without changing URL if at root
     if (!routeSlug) {
       if (selectedFile && runs.has(selectedFile)) return
       let latest: Run | null = null
@@ -108,15 +107,23 @@ export default function App() {
   const selectedRun = selectedFile ? runs.get(selectedFile) ?? null : null
 
   const sidebarContent = (
-    <div className="flex flex-col h-full overflow-hidden bg-transparent">
-      <div className="px-3.5 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70 border-b border-white/[0.08] shrink-0 select-none flex items-center justify-between">
-        <span>Sessions</span>
+    <div className="flex flex-col h-full overflow-hidden bg-[#09090b]">
+      {/* Refined Sidebar Header */}
+      <div className="h-10 px-3 flex items-center justify-between border-b border-neutral-800/80 shrink-0 select-none bg-[#09090b]">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-neutral-400" />
+          <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-neutral-300">
+            Sessions
+          </span>
+        </div>
         {runs.size > 0 && (
-          <span className="font-mono text-[10px] px-2 py-0.5 text-muted-foreground/70 bg-white/[0.06] border border-white/[0.08] rounded-full tabular-nums animate-fade-in">
+          <span className="font-mono text-[10px] px-1.5 py-0.5 text-neutral-400 bg-neutral-900 border border-neutral-800 rounded tabular-nums">
             {runs.size}
           </span>
         )}
       </div>
+
+      {/* Session Tree */}
       <div className="flex-1 min-h-0">
         <Sidebar
           runs={runs}
@@ -128,31 +135,31 @@ export default function App() {
   )
 
   return (
-    <div className="h-screen flex overflow-hidden bg-background text-foreground relative">
+    <div className="h-screen flex overflow-hidden bg-[#09090b] text-neutral-200">
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-[250px] min-w-[250px] flex-col glass-sidebar transition-colors relative z-10">
+      <aside className="hidden md:flex w-[250px] min-w-[250px] flex-col border-r border-neutral-800/80 bg-[#09090b] relative z-10">
         {sidebarContent}
       </aside>
 
       {/* Mobile Sheet */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="flex flex-col p-0 w-[280px] glass-sidebar border-r border-white/10">
+        <SheetContent side="left" className="flex flex-col p-0 w-[260px] border-r border-neutral-800 bg-[#09090b]">
           {sidebarContent}
         </SheetContent>
       </Sheet>
 
-      {/* Main */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-0">
+      {/* Main transcript panel */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#09090b] relative z-0">
         {/* Mobile top bar */}
-        <div className="md:hidden flex items-center gap-3 px-3 py-2.5 glass-header shrink-0">
+        <div className="md:hidden flex items-center gap-3 px-3 h-10 border-b border-neutral-800 bg-[#09090b] shrink-0">
           <button
             onClick={() => setMobileOpen(true)}
             aria-label="Open sessions menu"
-            className="p-1.5 rounded-lg hover:bg-white/[0.08] text-muted-foreground hover:text-foreground active:scale-95 transition-all duration-150 cursor-pointer"
+            className="p-1 rounded text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 transition-colors cursor-pointer"
           >
             <Menu className="w-4 h-4" />
           </button>
-          <span className="font-mono text-xs text-foreground/90 truncate font-medium">
+          <span className="font-mono text-xs text-neutral-200 truncate font-medium">
             {selectedRun?.convId ? selectedRun.convId.slice(0, 12) : "agy"}
           </span>
         </div>

@@ -1,10 +1,39 @@
 import { tool } from "@opencode-ai/plugin"
-import { spawn } from "node:child_process"
+import { spawn, spawnSync } from "node:child_process"
 import { writeFile, mkdir } from "node:fs/promises"
-import { appendFileSync } from "node:fs"
+import { appendFileSync, existsSync, mkdirSync, rmSync } from "node:fs"
 import { dirname } from "node:path"
 import os from "node:os"
 import path from "node:path"
+
+/**
+ * Windows workaround: agy's embedded ripgrep handler (grep_handler.go) chokes
+ * on paths containing spaces — strconv.Atoi tries to parse the file path as a
+ * line number. We create a directory junction from a no-space temp path so
+ * agy/ripgrep sees a clean path. Junctions are cleaned up after agy exits.
+ */
+const _junctions: string[] = []
+function noSpacePath(original: string): string {
+  if (!original || !original.includes(" ")) return original
+  if (process.platform !== "win32") return original
+  const base = path.join(os.tmpdir(), "agy-junctions")
+  try { mkdirSync(base, { recursive: true }) } catch { /* might already exist */ }
+  const junctionDir = path.join(base, `w${Date.now()}_${Math.random().toString(36).slice(2, 8)}`)
+  try {
+    spawnSync("cmd", ["/c", "mklink", "/J", junctionDir, original], { stdio: "ignore" })
+    if (existsSync(junctionDir)) {
+      _junctions.push(junctionDir)
+      return junctionDir
+    }
+  } catch { /* fall through to original */ }
+  return original
+}
+function cleanupJunctions() {
+  for (const j of _junctions) {
+    try { spawnSync("cmd", ["/c", "rmdir", j], { stdio: "ignore" }) } catch {}
+  }
+  _junctions.length = 0
+}
 
 /**
  * opencode custom tool: delegates to Antigravity (agy) as a blocking one-shot.
@@ -179,11 +208,18 @@ export default tool({
     if (args.mode) agyArgs.push("--mode", args.mode)
     agyArgs.push("--print-timeout", printTimeout)
     ;(args.add_dirs || []).forEach((d) => {
-      if (d) agyArgs.push("--add-dir", d)
+      if (d) agyArgs.push("--add-dir", noSpacePath(d))
     })
     if (args.conversation_id) agyArgs.push("--conversation", args.conversation_id)
 
-    const proc = spawn(AGY_BIN, agyArgs, { stdio: ["ignore", "pipe", "pipe"] })
+    // Use a no-space cwd so agy's embedded ripgrep doesn't choke on spaces
+    const spawnOpts: { stdio: ("ignore" | "pipe")[]; cwd?: string } = { stdio: ["ignore", "pipe", "pipe"] }
+    const cwd = process.cwd()
+    if (cwd.includes(" ")) {
+      const safeCwd = noSpacePath(cwd)
+      if (safeCwd !== cwd) spawnOpts.cwd = safeCwd
+    }
+    const proc = spawn(AGY_BIN, agyArgs, spawnOpts)
 
     // Write PID event so viewer and server can track and interrupt if needed
     try {
@@ -289,6 +325,7 @@ export default tool({
 
     return await new Promise((resolve, reject) => {
       proc.on("close", (code) => {
+        cleanupJunctions()
         if (pending) handleLine(pending)
         if (turnError) {
           reject(new Error(turnError))
@@ -316,7 +353,10 @@ export default tool({
           metadata: { conversation_id: conversationId, tee_file: teePath, usage },
         })
       })
-      proc.on("error", (err) => reject(err))
+      proc.on("error", (err) => {
+        cleanupJunctions()
+        reject(err)
+      })
     })
   },
 })
