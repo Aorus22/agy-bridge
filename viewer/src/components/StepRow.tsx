@@ -153,19 +153,19 @@ function ExpandedParams({ params }: { params: Record<string, unknown> | null }) 
 
   return (
     <div className="space-y-1.5 font-mono text-[11px] leading-relaxed min-w-0 max-w-full overflow-hidden">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground/40 font-semibold select-none">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground/50 font-semibold select-none">
         Parameters
       </div>
-      <div className="pl-2.5 border-l-2 border-border/50 space-y-1.5 min-w-0 max-w-full overflow-hidden">
+      <div className="pl-3 border-l-2 border-white/10 space-y-1.5 min-w-0 max-w-full overflow-hidden">
         {entries.map(([k, v]) => {
           const isMultiline = typeof v === "string" && v.includes("\n")
           const val = typeof v === "string" ? v : v == null ? "null" : JSON.stringify(v, null, 2)
 
           if (isMultiline || val.length > 200) {
             return (
-              <div key={k} className="space-y-0.5 min-w-0 max-w-full">
+              <div key={k} className="space-y-1 min-w-0 max-w-full">
                 <span className="text-muted-foreground/70 break-all">{k}:</span>
-                <pre className="text-foreground/85 bg-background/50 border border-border/40 rounded p-2 text-[11px] font-mono whitespace-pre-wrap break-all max-h-48 overflow-y-auto overflow-x-auto max-w-full min-w-0">
+                <pre className="text-foreground/90 bg-black/40 border border-white/10 rounded-lg p-2.5 text-[11px] font-mono whitespace-pre-wrap break-all max-h-48 overflow-y-auto overflow-x-auto max-w-full min-w-0">
                   {val}
                 </pre>
               </div>
@@ -175,7 +175,7 @@ function ExpandedParams({ params }: { params: Record<string, unknown> | null }) 
           return (
             <div key={k} className="text-[11px] break-all min-w-0 max-w-full">
               <span className="text-muted-foreground/70 mr-1.5 shrink-0">{k}:</span>
-              <span className="text-foreground/85 whitespace-pre-wrap break-all">{val}</span>
+              <span className="text-foreground/90 whitespace-pre-wrap break-all">{val}</span>
             </div>
           )
         })}
@@ -278,7 +278,7 @@ function DiffView({
   return (
     <div className="space-y-1.5 min-w-0 max-w-full">
       <div className="flex items-center justify-between gap-2 min-w-0">
-        <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/50 font-semibold select-none min-w-0">
+        <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60 font-semibold select-none min-w-0">
           <span className="truncate">Diff — {filename}</span>
           {addCount > 0 && <span className="text-emerald-400 font-normal">+{addCount}</span>}
           {delCount > 0 && <span className="text-red-400 font-normal">-{delCount}</span>}
@@ -287,7 +287,7 @@ function DiffView({
           <button
             type="button"
             onClick={() => setUserExpanded(!isExpanded)}
-            className="text-[10px] font-mono text-muted-foreground/60 hover:text-foreground cursor-pointer transition-all duration-150 px-1.5 py-0.5 rounded bg-muted/30 hover:bg-muted/60 active:scale-95 shrink-0 select-none flex items-center gap-1"
+            className="text-[10px] font-mono text-muted-foreground/70 hover:text-foreground cursor-pointer transition-all duration-150 px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] active:scale-95 shrink-0 select-none flex items-center gap-1"
           >
             <ChevronRight
               className={cn(
@@ -301,14 +301,14 @@ function DiffView({
       </div>
 
       {isExpanded && (
-        <div className="rounded border border-border/40 bg-background/50 overflow-hidden min-w-0 max-w-full animate-expand-down">
+        <div className="rounded-xl border border-white/10 bg-black/40 overflow-hidden min-w-0 max-w-full animate-expand-down">
           <div className="max-h-80 overflow-y-auto overflow-x-auto min-w-0 max-w-full font-mono text-[11px]">
             {displayedLines.map((line, idx) => {
               if (line.isDivider) {
                 return (
                   <div
                     key={line.key}
-                    className="px-2.5 py-0.5 text-[10px] font-mono text-muted-foreground/30 bg-muted/10 select-none tracking-widest text-center"
+                    className="px-2.5 py-0.5 text-[10px] font-mono text-muted-foreground/30 bg-white/[0.02] select-none tracking-widest text-center"
                   >
                     ···
                   </div>
@@ -325,9 +325,9 @@ function DiffView({
                   style={{ animationDelay: `${Math.min(idx * 6, 120)}ms` }}
                   className={cn(
                     "px-2.5 py-0.5 flex items-start min-w-fit leading-relaxed select-text animate-diff-line transition-colors duration-100",
-                    isAdd && "bg-emerald-950/20 text-emerald-400 hover:bg-emerald-950/35",
-                    isDel && "bg-red-950/20 text-red-400 hover:bg-red-950/35",
-                    isCtx && "text-muted-foreground/40 hover:bg-muted/15"
+                    isAdd && "bg-emerald-950/25 text-emerald-400 hover:bg-emerald-950/40",
+                    isDel && "bg-red-950/25 text-red-400 hover:bg-red-950/40",
+                    isCtx && "text-muted-foreground/50 hover:bg-white/[0.03]"
                   )}
                 >
                   <span className="select-none shrink-0 w-3.5 mr-1 text-center font-mono font-semibold">
@@ -339,7 +339,7 @@ function DiffView({
             })}
           </div>
           {remainingCount > 0 && (
-            <div className="px-2.5 py-1 text-[10px] font-mono text-muted-foreground/40 italic bg-muted/10 border-t border-border/20 select-none">
+            <div className="px-2.5 py-1 text-[10px] font-mono text-muted-foreground/40 italic bg-white/[0.02] border-t border-white/[0.06] select-none">
               … {remainingCount} more lines
             </div>
           )}
@@ -354,16 +354,16 @@ function renderMd(text: string): string {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-  // code blocks
+  // code blocks (flat background, no backdrop-filter)
   h = h.replace(
     /```(\w*)\n([\s\S]*?)```/g,
     (_, __, code) =>
-      `<pre class="bg-card border border-border rounded-md p-2.5 overflow-x-auto max-w-full my-2 text-xs font-mono text-foreground/90 transition-colors"><code>${code.replace(/\n$/, "")}</code></pre>`
+      `<pre class="bg-black/40 border border-white/10 rounded-xl p-3 overflow-x-auto max-w-full my-2 text-xs font-mono text-foreground/90 shadow-xs"><code>${code.replace(/\n$/, "")}</code></pre>`
   )
   // inline code
   h = h.replace(
     /`([^`]+)`/g,
-    '<code class="bg-muted px-1 py-0.5 rounded text-xs font-mono border border-border/40 text-foreground/90 break-all">$1</code>'
+    '<code class="bg-white/[0.08] border border-white/10 px-1.5 py-0.5 rounded-md text-xs font-mono text-foreground/90 break-all">$1</code>'
   )
   // bold
   h = h.replace(/\*\*([^*]+)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>')
@@ -372,20 +372,20 @@ function renderMd(text: string): string {
   // links
   h = h.replace(
     /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" target="_blank" rel="noreferrer" class="text-primary hover:underline break-all transition-colors duration-150">$1</a>'
+    '<a href="$2" target="_blank" rel="noreferrer" class="text-blue-400 hover:underline break-all transition-colors duration-150">$1</a>'
   )
   // headers (###, ##, #)
-  h = h.replace(/^### (.+)$/gm, '<div class="text-sm font-semibold text-foreground mt-2 mb-1">$1</div>')
-  h = h.replace(/^## (.+)$/gm, '<div class="text-base font-semibold text-foreground mt-2.5 mb-1">$1</div>')
-  h = h.replace(/^# (.+)$/gm, '<div class="text-lg font-semibold text-foreground mt-3 mb-1.5">$1</div>')
+  h = h.replace(/^### (.+)$/gm, '<div class="text-sm font-semibold text-foreground mt-2.5 mb-1">$1</div>')
+  h = h.replace(/^## (.+)$/gm, '<div class="text-base font-semibold text-foreground mt-3 mb-1">$1</div>')
+  h = h.replace(/^# (.+)$/gm, '<div class="text-lg font-semibold text-foreground mt-3.5 mb-1.5">$1</div>')
   // list items (- and *)
   h = h.replace(/^(?:- |\* )(.+)$/gm, '<div class="text-sm text-foreground/90 pl-4 relative before:content-[\'•\'] before:absolute before:left-1 before:text-muted-foreground/60">$1</div>')
   // numbered list items (1. 2. etc)
   h = h.replace(/^(\d+)\. (.+)$/gm, '<div class="text-sm text-foreground/90 pl-5"><span class="text-muted-foreground/60">$1.</span> $2</div>')
   // blockquotes
-  h = h.replace(/^> (.+)$/gm, '<blockquote class="border-l-2 border-border pl-3 text-muted-foreground text-sm my-1">$1</blockquote>')
+  h = h.replace(/^> (.+)$/gm, '<blockquote class="border-l-2 border-white/20 bg-white/[0.02] pl-3 py-0.5 rounded-r text-muted-foreground text-sm my-1.5">$1</blockquote>')
   // horizontal rules
-  h = h.replace(/^---$/gm, '<hr class="border-border my-2"/>')
+  h = h.replace(/^---$/gm, '<hr class="border-white/10 my-2.5"/>')
   // line breaks (but not inside pre/code)
   h = h.replace(/\n/g, "<br/>")
   // clean up extra brs around block elements
@@ -438,7 +438,7 @@ export function StepRow({ step }: { step: Step }) {
     )
   }
 
-  // ── tool call: git-style collapsible row ──
+  // ── tool call: flat glass-look card collapsible row (NO blur for 60fps SSE updates) ──
   if (isTool) {
     const ToolIcon = getToolIcon(step.tool)
     const summary = getToolSummary(step.tool, step.params)
@@ -448,25 +448,25 @@ export function StepRow({ step }: { step: Step }) {
     const hasError = !!step.error
 
     return (
-      <div className="px-4 py-0.5 min-w-0 max-w-full animate-tool-in">
+      <div className="px-4 py-1 min-w-0 max-w-full animate-tool-in">
         <div
           className={cn(
-            "rounded-md border border-border/50 bg-card/40 hover:bg-card/70 hover:border-border/75 transition-all duration-150 overflow-hidden min-w-0 max-w-full group",
-            expanded && "border-border/80 bg-card/60 shadow-xs"
+            "rounded-xl border border-white/[0.08] bg-card/60 hover:bg-card/85 hover:border-white/[0.14] transition-all duration-150 overflow-hidden min-w-0 max-w-full group shadow-[0_2px_10px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.06)]",
+            expanded && "border-white/[0.14] bg-card/80 shadow-[0_4px_20px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.1)]"
           )}
         >
           <button
             type="button"
             onClick={() => setExpanded(!expanded)}
             className={cn(
-              "w-full flex items-center gap-2 px-2.5 py-1.5 text-left text-xs select-none hover:bg-muted/30 active:bg-muted/40 transition-colors duration-150 cursor-pointer min-w-0 overflow-hidden",
-              expanded && "bg-muted/20"
+              "w-full flex items-center gap-2 px-3 py-2 text-left text-xs select-none hover:bg-white/[0.03] active:bg-white/[0.05] transition-colors duration-150 cursor-pointer min-w-0 overflow-hidden",
+              expanded && "bg-white/[0.02]"
             )}
           >
             <ChevronRight
               className={cn(
                 "w-3.5 h-3.5 text-muted-foreground/60 shrink-0 transition-transform duration-200 ease-out",
-                expanded && "rotate-90 text-foreground/80"
+                expanded && "rotate-90 text-foreground/90"
               )}
             />
             <ToolIcon className="w-3.5 h-3.5 text-muted-foreground/70 group-hover:text-muted-foreground/90 transition-colors shrink-0" />
@@ -491,25 +491,25 @@ export function StepRow({ step }: { step: Step }) {
           </button>
 
           {expanded && (
-            <div className="border-t border-border/40 bg-muted/20 px-3 py-2.5 space-y-2.5 text-xs min-w-0 max-w-full overflow-hidden animate-expand-down">
+            <div className="border-t border-white/[0.08] bg-background/80 px-3.5 py-3 space-y-3 text-xs min-w-0 max-w-full overflow-hidden animate-expand-down">
               {hasParams && <ExpandedParams params={step.params} />}
               {hasDiff && <DiffView diff={step.diff!} params={step.params} />}
               {hasOutput && (
                 <div className="space-y-1 min-w-0 max-w-full">
-                  <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/40 font-semibold select-none">
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/50 font-semibold select-none">
                     Output
                   </div>
-                  <pre className="font-mono text-[11px] text-foreground/85 bg-background/50 border border-border/40 rounded px-2.5 py-1.5 max-h-48 overflow-y-auto overflow-x-auto whitespace-pre-wrap break-all min-w-0 max-w-full transition-colors">
+                  <pre className="font-mono text-[11px] text-foreground/90 bg-black/40 border border-white/10 rounded-lg px-3 py-2 max-h-48 overflow-y-auto overflow-x-auto whitespace-pre-wrap break-all min-w-0 max-w-full transition-colors">
                     {step.output}
                   </pre>
                 </div>
               )}
               {hasError && (
                 <div className="space-y-1 min-w-0 max-w-full">
-                  <div className="text-[10px] font-mono uppercase tracking-wider text-red-400/60 font-semibold select-none">
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-red-400/70 font-semibold select-none">
                     Error
                   </div>
-                  <pre className="font-mono text-[11px] text-red-400/90 bg-red-950/20 border border-red-900/30 rounded px-2.5 py-1.5 max-h-48 overflow-y-auto overflow-x-auto whitespace-pre-wrap break-all min-w-0 max-w-full transition-colors">
+                  <pre className="font-mono text-[11px] text-red-300 bg-red-950/30 border border-red-500/25 rounded-lg px-3 py-2 max-h-48 overflow-y-auto overflow-x-auto whitespace-pre-wrap break-all min-w-0 max-w-full transition-colors">
                     {step.error}
                   </pre>
                 </div>
@@ -546,3 +546,4 @@ export function StepRow({ step }: { step: Step }) {
 
   return null
 }
+

@@ -103,11 +103,11 @@ export default function App() {
   const selectedRun = selectedFile ? runs.get(selectedFile) ?? null : null
 
   const sidebarContent = (
-    <div className="flex flex-col h-full overflow-hidden bg-card">
-      <div className="px-3.5 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 border-b border-border shrink-0 select-none flex items-center justify-between">
+    <div className="flex flex-col h-full overflow-hidden bg-transparent">
+      <div className="px-3.5 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70 border-b border-white/[0.08] shrink-0 select-none flex items-center justify-between">
         <span>Sessions</span>
         {runs.size > 0 && (
-          <span className="font-mono text-[10px] px-1.5 py-0.5 text-muted-foreground/50 bg-muted/40 rounded tabular-nums animate-fade-in">
+          <span className="font-mono text-[10px] px-2 py-0.5 text-muted-foreground/70 bg-white/[0.06] border border-white/[0.08] rounded-full tabular-nums animate-fade-in">
             {runs.size}
           </span>
         )}
@@ -123,31 +123,31 @@ export default function App() {
   )
 
   return (
-    <div className="h-screen flex overflow-hidden bg-background text-foreground">
+    <div className="h-screen flex overflow-hidden bg-background text-foreground relative">
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-[240px] min-w-[240px] flex-col bg-card border-r border-border transition-colors">
+      <aside className="hidden md:flex w-[250px] min-w-[250px] flex-col glass-sidebar transition-colors relative z-10">
         {sidebarContent}
       </aside>
 
       {/* Mobile Sheet */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="flex flex-col p-0 w-[280px]">
+        <SheetContent side="left" className="flex flex-col p-0 w-[280px] glass-sidebar border-r border-white/10">
           {sidebarContent}
         </SheetContent>
       </Sheet>
 
       {/* Main */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-0">
         {/* Mobile top bar */}
-        <div className="md:hidden flex items-center gap-3 px-3 py-2 border-b border-border bg-card">
+        <div className="md:hidden flex items-center gap-3 px-3 py-2.5 glass-header shrink-0">
           <button
             onClick={() => setMobileOpen(true)}
             aria-label="Open sessions menu"
-            className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground active:scale-95 transition-all duration-150 cursor-pointer"
+            className="p-1.5 rounded-lg hover:bg-white/[0.08] text-muted-foreground hover:text-foreground active:scale-95 transition-all duration-150 cursor-pointer"
           >
             <Menu className="w-4 h-4" />
           </button>
-          <span className="font-mono text-xs text-foreground/80 truncate">
+          <span className="font-mono text-xs text-foreground/90 truncate font-medium">
             {selectedRun?.convId ? selectedRun.convId.slice(0, 12) : "agy"}
           </span>
         </div>

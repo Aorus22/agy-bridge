@@ -72,26 +72,26 @@ export function Sidebar({
 
   return (
     <ScrollArea className="h-full w-full min-w-0">
-      <div className="py-1 px-1.5 space-y-1 min-w-0 max-w-full overflow-hidden animate-fade-in">
+      <div className="py-2 px-2 space-y-1.5 min-w-0 max-w-full overflow-hidden animate-fade-in">
         {Array.from(groups.entries()).map(([proj, rs]) => {
           const isCollapsed = collapsed.has(proj)
           return (
             <Collapsible key={proj} open={!isCollapsed} onOpenChange={() => toggle(proj)} className="min-w-0 max-w-full">
-              <CollapsibleTrigger className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors duration-150 cursor-pointer rounded select-none min-w-0 overflow-hidden group">
+              <CollapsibleTrigger className="w-full flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-muted-foreground/70 hover:text-foreground hover:bg-white/[0.04] transition-all duration-150 cursor-pointer rounded-lg select-none min-w-0 overflow-hidden group">
                 <ChevronRight
                   className={cn(
                     "w-3.5 h-3.5 text-muted-foreground/50 group-hover:text-muted-foreground transition-transform duration-200 ease-out shrink-0",
                     !isCollapsed && "rotate-90"
                   )}
                 />
-                <span className="flex-1 truncate text-left min-w-0" title={proj}>
+                <span className="flex-1 truncate text-left min-w-0 font-medium" title={proj}>
                   {shortPath(proj)}
                 </span>
-                <span className="text-[10px] text-muted-foreground/40 font-mono tabular-nums shrink-0 group-hover:text-muted-foreground/60 transition-colors">
+                <span className="text-[10px] text-muted-foreground/40 font-mono tabular-nums shrink-0 px-1.5 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.06] group-hover:text-muted-foreground/70 transition-colors">
                   {rs.length}
                 </span>
               </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-0.5 pt-0.5 min-w-0 max-w-full overflow-hidden">
+              <CollapsibleContent className="space-y-0.5 pt-1 min-w-0 max-w-full overflow-hidden">
                 {rs
                   .slice()
                   .sort((a, b) => b.start - a.start)
@@ -110,10 +110,10 @@ export function Sidebar({
                           }
                         }}
                         className={cn(
-                          "w-full flex items-center gap-2 px-2.5 py-1.5 text-xs rounded transition-all duration-150 text-left cursor-pointer min-w-0 overflow-hidden group/item",
+                          "w-full flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-lg transition-all duration-150 text-left cursor-pointer min-w-0 overflow-hidden group/item relative border",
                           isSelected
-                            ? "bg-accent text-accent-foreground font-medium shadow-xs border-l-2 border-primary pl-2"
-                            : "text-muted-foreground hover:bg-muted/40 hover:text-foreground hover:translate-x-0.5 active:translate-x-0"
+                            ? "bg-white/[0.09] text-foreground font-medium border-white/[0.15] shadow-[0_2px_12px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.12)]"
+                            : "text-muted-foreground/80 border-transparent hover:bg-white/[0.045] hover:text-foreground hover:border-white/[0.08] hover:translate-x-0.5 active:translate-x-0"
                         )}
                       >
                         <StatusIcon status={r.status} />
@@ -129,7 +129,7 @@ export function Sidebar({
                             title="Stop session"
                             aria-label="Stop session"
                             onClick={(e) => handleStop(e, r)}
-                            className="p-1 -mr-1 rounded hover:bg-red-500/20 text-muted-foreground/60 hover:text-red-400 active:scale-95 transition-all duration-150 cursor-pointer shrink-0"
+                            className="p-1 -mr-1 rounded-md hover:bg-red-500/20 text-muted-foreground/60 hover:text-red-400 active:scale-95 transition-all duration-150 cursor-pointer shrink-0"
                           >
                             <Square className="w-3 h-3 fill-current" />
                           </button>
