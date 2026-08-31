@@ -15,7 +15,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 )
 
@@ -305,7 +304,7 @@ func handleStop(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := syscall.Kill(target, syscall.SIGTERM); err != nil {
+	if err := stopProcess(target); err != nil {
 		log.Printf("[stop] failed to kill PID %d: %v", target, err)
 		writeJSON(w, http.StatusOK, map[string]any{
 			"ok": false, "error": err.Error(), "pid": target,
@@ -313,7 +312,7 @@ func handleStop(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("[stop] sent SIGTERM to PID %d", target)
+	log.Printf("[stop] sent stop signal to PID %d", target)
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "pid": target})
 }
 
